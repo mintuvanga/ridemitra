@@ -122,9 +122,9 @@ export default function TripsPage() {
   );
 
   return (
-    <main className="min-h-screen bg-slate-100 text-slate-900 sm:py-6">
+    <main className="rm-page-enter min-h-screen bg-slate-100 text-slate-900 sm:py-6">
       <div className="relative mx-auto min-h-screen w-full max-w-md overflow-hidden bg-[#f8fafc] shadow-xl sm:min-h-[850px] sm:rounded-[2rem] sm:border sm:border-slate-200">
-        <header className="sticky top-0 z-20 border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur">
+        <header className="rm-slide-down sticky top-0 z-20 border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur">
           <div className="flex items-center justify-between">
             <Link href="/" className="text-2xl font-black tracking-tight text-slate-900">
               Ride<span className="text-emerald-600">Mitra</span>
@@ -137,7 +137,7 @@ export default function TripsPage() {
         </header>
 
         <div className="px-4 pb-28 pt-5">
-          <section className="relative overflow-hidden rounded-3xl bg-emerald-700 p-5 text-white">
+          <section className="rm-card-enter rm-glow relative overflow-hidden rounded-3xl bg-emerald-700 p-5 text-white">
             <div className="relative z-10">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-100">
                 Travel together
@@ -152,7 +152,7 @@ export default function TripsPage() {
             <div className="absolute -right-2 bottom-0 text-7xl opacity-90">🚗</div>
           </section>
 
-          <section className="mt-5 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <section className="rm-card-enter rm-delay-1 mt-5 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
             <h2 className="mb-3 text-sm font-bold">Find your route</h2>
             <label className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
               <span className="text-emerald-600">●</span>
@@ -243,9 +243,9 @@ export default function TripsPage() {
               </div>
             )}
 
-            <div className="space-y-3">
+            <div className="rm-stagger space-y-3">
               {filteredTrips.map((trip) => (
-                <article key={trip.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                <article key={trip.id} className="rm-card-enter rm-tap rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                   <div className="flex items-center justify-between gap-2">
                     <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
                       {trip.vehicle_type === "car" ? "🚗 Car ride" : "🏍️ Bike ride"}
@@ -339,4 +339,6 @@ export default function TripsPage() {
     </main>
   );
 }
+
+
 

@@ -1,8 +1,8 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
 @theme inline {
@@ -12,15 +12,91 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.rm-page-enter {
+  animation: rm-enter 550ms ease-out both;
+}
+
+.rm-slide-down {
+  animation: rm-slide-down 500ms ease-out both;
+}
+
+.rm-card-enter {
+  animation: rm-enter 650ms ease-out both;
+}
+
+.rm-delay-1 { animation-delay: 100ms; }
+.rm-delay-2 { animation-delay: 200ms; }
+.rm-delay-3 { animation-delay: 300ms; }
+
+.rm-float {
+  animation: rm-float 4s ease-in-out infinite;
+}
+
+.rm-glow {
+  position: relative;
+  isolation: isolate;
+}
+
+.rm-glow::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid rgba(110, 231, 183, 0.35);
+  pointer-events: none;
+  animation: rm-glow 3s ease-in-out infinite;
+}
+
+.rm-tap {
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.rm-tap:active {
+  transform: scale(0.97);
+}
+
+@keyframes rm-enter {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rm-slide-down {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rm-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes rm-glow {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.9; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  .rm-page-enter,
+  .rm-slide-down,
+  .rm-card-enter,
+  .rm-float,
+  .rm-glow::after {
+    animation: none !important;
+  }
+
+  .rm-tap {
+    transition: none !important;
+  }
 }
