@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 
 type Trip = {
   id: string;
+  driver_id: string;
   origin_city: string;
   destination_city: string;
   departure_at: string;
@@ -21,7 +22,9 @@ export default function TripsPage() {
   const [destination, setDestination] = useState("");
   const [message, setMessage] = useState("Loading journeys...");
   const [loading, setLoading] = useState(true);
-  const [signedIn, setSignedIn] = useState(false);
+  const [userId, setUserId] = useState("");
+  const [busyTripId, setBusyTripId] = useState("");
+  const [bookingMessages, setBookingMessages] = useState<Record<string, string>>({});
 
   const loadTrips = useCallback(async () => {
     setLoading(true);
@@ -33,18 +36,18 @@ export default function TripsPage() {
         await supabase.auth.getUser();
 
       if (authError || !authData.user) {
-        setSignedIn(false);
+        setUserId("");
         setTrips([]);
-        setMessage("Please sign in to find available journeys.");
+        setMessage("Please sign in to find and request journeys.");
         return;
       }
 
-      setSignedIn(true);
+      setUserId(authData.user.id);
 
       const { data, error } = await supabase
         .from("trips")
         .select(
-          "id, origin_city, destination_city, departure_at, vehicle_type, seats_available, price_per_seat, notes"
+          "id, driver_id, origin_city, destination_city, departure_at, vehicle_type, seats_available, price_per_seat, notes"
         )
         .eq("status", "open")
         .gt("departure_at", new Date().toISOString())
@@ -55,13 +58,13 @@ export default function TripsPage() {
 
       setTrips((data ?? []) as Trip[]);
       setMessage(
-        data?.length ? "" : "No upcoming journeys yet. Check again later or publish your own."
+        data?.length
+          ? ""
+          : "No upcoming journeys are available yet. You can publish your own."
       );
     } catch (error) {
       setMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to load journeys. Please try again."
+        error instanceof Error ? error.message : "Unable to load journeys."
       );
     } finally {
       setLoading(false);
@@ -71,6 +74,58 @@ export default function TripsPage() {
   useEffect(() => {
     void loadTrips();
   }, [loadTrips]);
+
+  async function requestSeat(trip: Trip) {
+    if (!userId) {
+      setBookingMessages((previous) => ({
+        ...previous,
+        [trip.id]: "Please sign in before requesting a seat.",
+      }));
+      return;
+    }
+
+    if (trip.driver_id === userId) return;
+
+    setBusyTripId(trip.id);
+    setBookingMessages((previous) => ({ ...previous, [trip.id]: "" }));
+
+    try {
+      const supabase = createClient();
+      const { data: authData, error: authError } =
+        await supabase.auth.getUser();
+
+      if (authError || !authData.user) {
+        throw new Error("Your session has expired. Please sign in again.");
+      }
+
+      const { error } = await supabase.from("bookings").insert({
+        trip_id: trip.id,
+        passenger_id: authData.user.id,
+        seats_requested: 1,
+        status: "pending",
+      });
+
+      if (error) {
+        if (error.code === "23505") {
+          throw new Error("You have already requested this journey.");
+        }
+        throw error;
+      }
+
+      setBookingMessages((previous) => ({
+        ...previous,
+        [trip.id]: "Request sent! Your booking is pending driver confirmation.",
+      }));
+    } catch (error) {
+      setBookingMessages((previous) => ({
+        ...previous,
+        [trip.id]:
+          error instanceof Error ? error.message : "Unable to send request.",
+      }));
+    } finally {
+      setBusyTripId("");
+    }
+  }
 
   const filteredTrips = trips.filter((trip) => {
     const fromMatches = trip.origin_city
@@ -84,7 +139,7 @@ export default function TripsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6">
+    <main className="min-h-screen bg-slate-100 px-4 py-8 text-slate-900 sm:px-6">
       <div className="mx-auto max-w-4xl">
         <Link href="/" className="font-semibold text-blue-700">
           ← RideMitra home
@@ -92,18 +147,15 @@ export default function TripsPage() {
 
         <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="font-semibold text-blue-700">RIDEMITRA</p>
-            <h1 className="mt-2 text-3xl font-bold text-slate-900">
-              Find a journey
-            </h1>
+            <p className="font-bold tracking-widest text-emerald-700">RIDEMITRA</p>
+            <h1 className="mt-2 text-3xl font-black">Find a journey</h1>
             <p className="mt-2 text-slate-600">
-              Find a ride that matches your route and travel plans.
+              Discover upcoming journeys and request a seat.
             </p>
           </div>
-
           <Link
             href="/trips/new"
-            className="rounded-xl bg-blue-700 px-5 py-3 font-semibold text-white hover:bg-blue-800"
+            className="rounded-xl bg-emerald-600 px-5 py-3 font-bold text-white hover:bg-emerald-700"
           >
             + Publish a journey
           </Link>
@@ -111,29 +163,26 @@ export default function TripsPage() {
 
         <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-bold">Search by route</h2>
-
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-medium text-slate-700">
+            <label className="text-sm font-semibold">
               From city
               <input
                 value={origin}
                 onChange={(e) => setOrigin(e.target.value)}
                 placeholder="e.g. Hyderabad"
-                className="mt-1 w-full rounded-lg border border-slate-300 p-3"
+                className="mt-1 w-full rounded-lg border border-slate-300 p-3 font-normal"
               />
             </label>
-
-            <label className="text-sm font-medium text-slate-700">
+            <label className="text-sm font-semibold">
               To city
               <input
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
                 placeholder="e.g. Vijayawada"
-                className="mt-1 w-full rounded-lg border border-slate-300 p-3"
+                className="mt-1 w-full rounded-lg border border-slate-300 p-3 font-normal"
               />
             </label>
           </div>
-
           <button
             type="button"
             onClick={() => {
@@ -148,9 +197,7 @@ export default function TripsPage() {
 
         <section className="mt-8">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold text-slate-900">
-              Available journeys
-            </h2>
+            <h2 className="text-xl font-bold">Available journeys</h2>
             <button
               type="button"
               onClick={() => void loadTrips()}
@@ -164,7 +211,7 @@ export default function TripsPage() {
           {!loading && message && (
             <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5 text-slate-700">
               <p>{message}</p>
-              {!signedIn && (
+              {!userId && (
                 <Link
                   href="/login"
                   className="mt-3 inline-block font-semibold text-blue-700 underline"
@@ -175,9 +222,9 @@ export default function TripsPage() {
             </div>
           )}
 
-          {!loading && signedIn && filteredTrips.length === 0 && trips.length > 0 && (
+          {!loading && userId && filteredTrips.length === 0 && trips.length > 0 && (
             <p className="mt-4 rounded-xl bg-white p-5 text-slate-600">
-              No journeys match those cities. Try another search.
+              No journeys match your search. Try different cities.
             </p>
           )}
 
@@ -189,10 +236,10 @@ export default function TripsPage() {
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-lg font-bold text-slate-900">
-                      {trip.origin_city} <span className="text-blue-700">→</span>{" "}
+                    <h3 className="text-xl font-bold">
+                      {trip.origin_city} <span className="text-emerald-600">→</span>{" "}
                       {trip.destination_city}
-                    </p>
+                    </h3>
                     <p className="mt-2 text-sm text-slate-600">
                       {new Date(trip.departure_at).toLocaleString("en-IN", {
                         dateStyle: "medium",
@@ -200,17 +247,15 @@ export default function TripsPage() {
                       })}
                     </p>
                   </div>
-                  <p className="text-xl font-bold text-blue-700">
+                  <p className="text-xl font-black text-emerald-700">
                     ₹{Number(trip.price_per_seat).toLocaleString("en-IN")}
-                    <span className="text-sm font-normal text-slate-500">
-                      {" "}/ seat
-                    </span>
+                    <span className="text-sm font-normal text-slate-500"> / seat</span>
                   </p>
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2 text-sm">
                   <span className="rounded-full bg-slate-100 px-3 py-1">
-                    {trip.vehicle_type === "car" ? "Car" : "Motorcycle"}
+                    {trip.vehicle_type === "car" ? "🚗 Car" : "🏍️ Motorcycle"}
                   </span>
                   <span className="rounded-full bg-slate-100 px-3 py-1">
                     {trip.seats_available} seats available
@@ -220,6 +265,27 @@ export default function TripsPage() {
                 {trip.notes && (
                   <p className="mt-3 whitespace-pre-wrap text-sm text-slate-600">
                     {trip.notes}
+                  </p>
+                )}
+
+                {trip.driver_id === userId ? (
+                  <p className="mt-5 rounded-lg bg-slate-100 p-3 text-sm font-semibold text-slate-600">
+                    This is your journey.
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void requestSeat(trip)}
+                    disabled={busyTripId === trip.id}
+                    className="mt-5 w-full rounded-xl bg-emerald-600 px-5 py-3 font-bold text-white hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
+                  >
+                    {busyTripId === trip.id ? "Sending request..." : "Request a seat"}
+                  </button>
+                )}
+
+                {bookingMessages[trip.id] && (
+                  <p role="status" className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
+                    {bookingMessages[trip.id]}
                   </p>
                 )}
               </article>
