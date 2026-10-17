@@ -313,7 +313,7 @@ export default function TripsPage() {
           </Link>
         </div>
 
-        <nav className="fixed bottom-0 left-0 right-0 z-30 mx-auto grid w-full max-w-md grid-cols-4 border-t border-slate-200 bg-white/95 px-2 pb-[max(12px,env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:bottom-6 sm:rounded-b-[2rem]">
+        <nav className="fixed bottom-0 left-0 right-0 z-30 mx-auto grid w-full max-w-md grid-cols-5 border-t border-slate-200 bg-white/95 px-2 pb-[max(12px,env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:bottom-6 sm:rounded-b-[2rem]">
           <Link href="/" className="flex flex-col items-center gap-1 py-2 text-slate-500">
             <span className="text-xl">⌂</span>
             <span className="text-[10px] font-semibold">Home</span>
@@ -326,6 +326,10 @@ export default function TripsPage() {
             <span className="text-xl">＋</span>
             <span className="text-[10px] font-semibold">Publish</span>
           </Link>
+          <Link href="/bookings" className="flex flex-col items-center gap-1 py-2 text-slate-500">
+            <span className="text-xl">🎫</span>
+            <span className="text-[10px] font-semibold">Bookings</span>
+          </Link>
           <Link href="/login" className="flex flex-col items-center gap-1 py-2 text-slate-500">
             <span className="text-xl">♙</span>
             <span className="text-[10px] font-semibold">Account</span>
@@ -335,3 +339,4 @@ export default function TripsPage() {
     </main>
   );
 }
+
