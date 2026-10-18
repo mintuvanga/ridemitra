@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSql } from "@/lib/db";
+import { ensureSchema, getSql } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -9,6 +9,7 @@ export async function GET() {
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Sign in to see your seat requests." }, { status: 401 });
+    await ensureSchema();
     const sql = getSql();
     const bookings = await sql`select b.id, b.trip_id, b.passenger_id, b.seats_requested, b.status, b.created_at,
       case when t.id is null then null else json_build_object(
