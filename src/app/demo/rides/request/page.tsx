@@ -17,6 +17,7 @@ export default function IncomingRideRequestPage() {
 
   function decide(next: Exclude<Decision, "pending">) {
     if (next === "accepted") {
+      window.open("https://www.google.com/maps/dir/?api=1&origin=" + encodeURIComponent(showNext ? "Madhapur Metro Station, Hyderabad" : "Ameerpet Metro Station, Hyderabad") + "&destination=" + encodeURIComponent(showNext ? "Inorbit Mall, Cyberabad, Hyderabad" : "HITEC City, Mindspace, Hyderabad") + "&travelmode=driving", "_blank", "noopener,noreferrer");
       router.push("/demo/rides/active");
       return;
     }
