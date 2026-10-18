@@ -26,6 +26,7 @@ export default function DriverDocumentsPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<FaceDetector | null>(null);
   const checkingRef = useRef(false);
+  const goodFramesRef = useRef(0);
   const selectedCount = requiredDocs.filter(doc => files[doc.key]).length;
 
   function stopCamera() {
@@ -34,11 +35,15 @@ export default function DriverDocumentsPage() {
     if (videoRef.current) videoRef.current.srcObject = null;
     setCameraOpen(false);
     setFaceReady(false);
+    goodFramesRef.current = 0;
+    detectorRef.current?.close();
+    detectorRef.current = null;
   }
 
   async function openCamera() {
     setCameraError("");
     setFaceReady(false);
+    goodFramesRef.current = 0;
     setFaceStatus("Opening camera…");
     let stage: "face-detection" | "camera" = "face-detection";
     try {
@@ -136,12 +141,14 @@ export default function DriverDocumentsPage() {
         const faces = detector.detectForVideo(video, performance.now()).detections;
         if (!active) return;
         if (faces.length !== 1) {
+          goodFramesRef.current = 0;
           setFaceReady(false);
           setFaceStatus(faces.length === 0 ? "No face detected — move into the oval and face the camera" : "Only one person should be visible");
           return;
         }
         const box = faces[0].boundingBox;
         if (!box) {
+          goodFramesRef.current = 0;
           setFaceReady(false);
           setFaceStatus("Could not measure your face — adjust your position");
           return;
@@ -150,6 +157,7 @@ export default function DriverDocumentsPage() {
         const cy = (box.originY + box.height / 2) / video.videoHeight;
         const widthRatio = box.width / video.videoWidth;
         if (cx < 0.3 || cx > 0.7 || cy < 0.22 || cy > 0.78 || widthRatio < 0.18 || widthRatio > 0.65) {
+          goodFramesRef.current = 0;
           setFaceReady(false);
           setFaceStatus("Move closer or adjust your face to fit inside the oval");
           return;
@@ -166,19 +174,28 @@ export default function DriverDocumentsPage() {
         for (let i = 0; i < pixels.length; i += 4) total += (pixels[i] * 0.299 + pixels[i + 1] * 0.587 + pixels[i + 2] * 0.114);
         const brightness = total / (pixels.length / 4);
         if (brightness < 55) {
+          goodFramesRef.current = 0;
           setFaceReady(false);
           setFaceStatus("Too dark — move to a brighter place");
           return;
         }
         if (brightness > 225) {
+          goodFramesRef.current = 0;
           setFaceReady(false);
           setFaceStatus("Too bright — avoid strong light behind you");
           return;
         }
+        goodFramesRef.current += 1;
+        if (goodFramesRef.current < 4) {
+          setFaceReady(false);
+          setFaceStatus(`Hold still — checking face position (${goodFramesRef.current}/4)`);
+          return;
+        }
         setFaceReady(true);
-        setFaceStatus("Face detected and centered — ready to capture");
+        setFaceStatus("Face centered and lighting looks good — ready to capture");
       } catch {
         if (active) {
+          goodFramesRef.current = 0;
           setFaceReady(false);
           setFaceStatus("Checking face… keep still and look at the camera");
         }
@@ -264,7 +281,7 @@ export default function DriverDocumentsPage() {
           <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-100 text-2xl">🛡️</div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-700">Step 1 of driver approval</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight">Verify your documents</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600">Upload clear, genuine documents that belong to you and your vehicle. Your driver account stays unapproved until the checks are completed.</p>
+          <p className="mt-3 text-sm leading-6 text-slate-600">Take a guided driver selfie and select your vehicle documents. Your driver account stays pending until secure upload and verification checks are completed.</p>
           <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900"><strong>Important:</strong> Selecting files here does not upload or verify them. Secure file storage and a real identity-verification provider must be connected before submissions can be accepted. We will not mark documents as verified without those checks.</div>
           <form onSubmit={submit} className="mt-6 space-y-4">
             {requiredDocs.map((doc, index) => (
@@ -295,7 +312,7 @@ export default function DriverDocumentsPage() {
             {cameraOpen && (
               <div className="rounded-2xl border border-sky-200 bg-slate-950 p-4 text-white">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="font-bold">Live selfie camera</h2>
+                  <div><h2 className="font-bold">Driver selfie check</h2><p className="mt-1 text-xs text-slate-300">Step 1 of 2 · Position and lighting</p></div>
                   <button type="button" onClick={stopCamera} className="rounded-lg border border-white/20 px-3 py-1.5 text-sm">Close</button>
                 </div>
                 <div className="relative mt-3 overflow-hidden rounded-2xl bg-black">
@@ -304,7 +321,7 @@ export default function DriverDocumentsPage() {
                 </div>
                 <p className={`mt-3 rounded-xl p-3 text-sm font-semibold ${faceReady ? "bg-emerald-500/20 text-emerald-200" : "bg-white/10 text-sky-100"}`} role="status">{faceStatus}</p>
                 <button type="button" disabled={!faceReady} onClick={captureSelfie} className="mt-3 w-full rounded-xl bg-sky-500 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-600">Capture photo</button>
-                <p className="mt-2 text-xs leading-5 text-slate-300">Face position and lighting are checked in your browser. This is not a liveness or identity verification check.</p>
+                <p className="mt-2 text-xs leading-5 text-slate-300">We check one centered face and acceptable lighting over several frames. This camera step does not prove liveness or match your face to an identity document.</p>
               </div>
             )}
             <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
