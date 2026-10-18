@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const codeHash = await hashPassword(code);
     const passwordHash = await hashPassword(password);
     const user = await sql.begin(async (tx) => {
-      let rows: Array<{ id: string; email: string; full_name: string }>;
+      let rows: any[];
       if (existing[0]) {
         rows = await tx`update public.users set full_name = ${name}, password_hash = ${passwordHash} where id = ${existing[0].id} returning id, email, full_name`;
       } else {
