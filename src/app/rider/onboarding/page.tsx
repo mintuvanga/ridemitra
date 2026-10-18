@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 export default function RiderOnboardingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     async function checkSession() {
@@ -21,7 +21,7 @@ export default function RiderOnboardingPage() {
           return;
         }
 
-        setPhone(data.user.phone ?? "");
+        setEmail(data.user.email ?? "");
       } catch {
         router.replace("/rider/login");
       } finally {
@@ -51,13 +51,13 @@ export default function RiderOnboardingPage() {
           <div className="text-4xl">🛡️</div>
           <h1 className="mt-4 text-2xl font-black">Rider registration</h1>
           <p className="mt-2 text-sm text-slate-400">
-            Your phone login is complete. Next, we will build your profile
+            Your email login is complete. Next, we will build your profile
             and secure document verification.
           </p>
 
           <div className="mt-6 rounded-2xl bg-emerald-400/10 p-4">
-            <p className="text-xs text-slate-400">Signed-in phone</p>
-            <p className="mt-1 font-semibold">{phone || "Verified phone account"}</p>
+            <p className="text-xs text-slate-400">Signed-in email</p>
+            <p className="mt-1 break-words font-semibold">{email || "Verified email account"}</p>
           </div>
 
           <div className="mt-5 space-y-3">
