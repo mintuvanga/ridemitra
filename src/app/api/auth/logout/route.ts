@@ -9,8 +9,7 @@ export async function POST(request: NextRequest) {
     const token = request.cookies.get(SESSION_COOKIE)?.value;
     if (token) {
       await ensureSchema();
-      await ensureSchema();
-    const sql = getSql();
+      const sql = getSql();
       await sql`delete from public.sessions where token_hash = ${hashToken(token)}`;
     }
     const response = NextResponse.json({ success: true });
