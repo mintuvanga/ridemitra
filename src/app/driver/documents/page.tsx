@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { FaceDetector, FilesetResolver } from "@mediapipe/tasks-vision";
 
 const requiredDocs = [
   { key: "licence", title: "Driving licence", detail: "Front and back, clearly readable", accept: "image/*,.pdf" },
@@ -10,9 +11,6 @@ const requiredDocs = [
   { key: "selfie", title: "Live selfie / face match", detail: "Use the live camera to capture your face", accept: "image/*" },
 ] as const;
 
-type FaceBox = { boundingBox: { x: number; y: number; width: number; height: number } };
-type FaceDetectorLike = { detect: (source: HTMLVideoElement | HTMLCanvasElement) => Promise<FaceBox[]> };
-type FaceDetectorConstructor = new (options?: { fastMode?: boolean; maxDetectedFaces?: number }) => FaceDetectorLike;
 
 export default function DriverDocumentsPage() {
   const [files, setFiles] = useState<Record<string, File | null>>({});
@@ -26,7 +24,7 @@ export default function DriverDocumentsPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const detectorRef = useRef<FaceDetectorLike | null>(null);
+  const detectorRef = useRef<FaceDetector | null>(null);
   const checkingRef = useRef(false);
   const selectedCount = requiredDocs.filter(doc => files[doc.key]).length;
 
@@ -42,13 +40,19 @@ export default function DriverDocumentsPage() {
     setCameraError("");
     setFaceReady(false);
     setFaceStatus("Opening camera…");
-    const Detector = (window as unknown as { FaceDetector?: FaceDetectorConstructor }).FaceDetector;
-    if (!Detector) {
-      setCameraError("Automatic face detection is not supported by this browser. Please use a supported browser with face detection enabled; we will not allow a selfie capture without the face check.");
-      return;
-    }
     try {
-      detectorRef.current = new Detector({ fastMode: true, maxDetectedFaces: 2 });
+      setFaceStatus("Loading automatic face detection…");
+      const vision = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
+      );
+      detectorRef.current = await FaceDetector.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
+          delegate: "CPU",
+        },
+        runningMode: "VIDEO",
+        minDetectionConfidence: 0.6,
+      });
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -78,7 +82,7 @@ export default function DriverDocumentsPage() {
       if (!video || !detector || video.readyState < 2 || checkingRef.current) return;
       checkingRef.current = true;
       try {
-        const faces = await detector.detect(video);
+        const faces = detector.detectForVideo(video, performance.now()).detections;
         if (!active) return;
         if (faces.length !== 1) {
           setFaceReady(false);
@@ -86,8 +90,13 @@ export default function DriverDocumentsPage() {
           return;
         }
         const box = faces[0].boundingBox;
-        const cx = (box.x + box.width / 2) / video.videoWidth;
-        const cy = (box.y + box.height / 2) / video.videoHeight;
+        if (!box) {
+          setFaceReady(false);
+          setFaceStatus("Could not measure your face — adjust your position");
+          return;
+        }
+        const cx = (box.originX + box.width / 2) / video.videoWidth;
+        const cy = (box.originY + box.height / 2) / video.videoHeight;
         const widthRatio = box.width / video.videoWidth;
         if (cx < 0.3 || cx > 0.7 || cy < 0.22 || cy > 0.78 || widthRatio < 0.18 || widthRatio > 0.65) {
           setFaceReady(false);
