@@ -1,8 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -14,11 +13,14 @@ export default function LoginPage() {
     e.preventDefault();
     setBusy(true);
     setMessage("");
-
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Sign-in failed.");
       window.location.href = "/trips";
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Sign-in failed.");
@@ -40,6 +42,7 @@ export default function LoginPage() {
       </form>
       {message && <p role="status" className="mt-4 break-words text-sm text-red-700">{message}</p>}
       <p className="mt-5 text-sm">New to RideMitra? <Link href="/signup" className="text-blue-700">Create an account</Link></p>
+      <p className="mt-3 text-sm"><Link href="/rider/login" className="text-blue-700">Rider account</Link></p>
     </main>
   );
 }
