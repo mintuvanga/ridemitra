@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -9,6 +9,14 @@ export default function RiderLoginPage() {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "auth_callback_failed") {
+      setMessage("That sign-in link could not be verified or has expired. Please request a new sign-in link.");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   async function sendMagicLink(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
