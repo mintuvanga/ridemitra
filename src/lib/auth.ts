@@ -1,7 +1,7 @@
 import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import { cookies } from "next/headers";
-import { getSql } from "@/lib/db";
+import { ensureSchema, getSql } from "@/lib/db";
 
 const scrypt = promisify(scryptCallback);
 export const SESSION_COOKIE = "ridemitra_session";
@@ -26,6 +26,7 @@ export async function verifyPassword(password: string, stored: string) {
 }
 
 export async function createSession(userId: string, secure: boolean) {
+  await ensureSchema();
   const sql = getSql();
   const rawToken = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
@@ -42,6 +43,7 @@ export async function createSession(userId: string, secure: boolean) {
 }
 
 export async function getCurrentUser() {
+  await ensureSchema();
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (!token) return null;
