@@ -1,6 +1,6 @@
 import { randomInt } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { getSql } from "@/lib/db";
+import { ensureSchema, getSql } from "@/lib/db";
 import { hashPassword } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
     if (password.length < 8 || password.length > 128) return NextResponse.json({ error: "Password must be between 8 and 128 characters." }, { status: 400 });
     if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) return NextResponse.json({ error: "Email verification is not configured yet. Add RESEND_API_KEY and EMAIL_FROM to the Render environment." }, { status: 503 });
+    await ensureSchema();
     const sql = getSql();
     const existing = await sql`select id, email_verified_at from public.users where email = ${email} limit 1`;
     if (existing[0]?.email_verified_at) return NextResponse.json({ error: "An account with this email already exists. Please sign in." }, { status: 409 });
