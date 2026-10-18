@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSql } from "@/lib/db";
+import { ensureSchema, getSql } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    await ensureSchema();
     const sql = getSql();
     const trips = await sql`select t.id, t.driver_id, t.origin_city, t.destination_city, t.departure_at, t.vehicle_type, t.seats_available, t.price_per_seat, t.notes, p.full_name as driver_name
       from public.trips t join public.profiles p on p.id = t.driver_id
