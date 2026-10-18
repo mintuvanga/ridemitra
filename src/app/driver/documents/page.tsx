@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 const requiredDocs = [
   { key: "licence", title: "Driving licence", detail: "Front and back, clearly readable", accept: "image/*,.pdf" },
@@ -12,28 +11,9 @@ const requiredDocs = [
 ] as const;
 
 export default function DriverDocumentsPage() {
-  const router = useRouter();
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-  const [sessionChecked, setSessionChecked] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    fetch("/api/auth/me", { cache: "no-store" })
-      .then(async response => {
-        const result = await response.json();
-        if (!response.ok || !result.user) {
-          router.replace("/");
-          return;
-        }
-        if (active) setSessionChecked(true);
-      })
-      .catch(() => router.replace("/"))
-      .finally(() => { if (active) setSessionChecked(true); });
-    return () => { active = false; };
-  }, [router]);
-
   const selectedCount = requiredDocs.filter(doc => files[doc.key]).length;
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -67,8 +47,6 @@ export default function DriverDocumentsPage() {
       setBusy(false);
     }
   }
-
-  if (!sessionChecked) return <main className="flex min-h-screen items-center justify-center bg-sky-50 text-sky-900">Checking your driver account…</main>;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-blue-50 px-4 py-6 text-slate-900 sm:px-6">
