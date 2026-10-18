@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSql } from "@/lib/db";
+import { ensureSchema, getSql } from "@/lib/db";
 import { createSession, verifyPassword } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const code = typeof body.code === "string" ? body.code.trim() : "";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !/^\d{6}$/.test(code)) return NextResponse.json({ error: "Enter your email and the six-digit code." }, { status: 400 });
+    await ensureSchema();
     const sql = getSql();
     const rows = await sql`select u.id, u.email, u.full_name, c.id as code_id, c.code_hash, c.attempts
       from public.users u join public.email_verification_codes c on c.user_id = u.id
