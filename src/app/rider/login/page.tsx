@@ -1,25 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function RiderLoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"error" | "success">("success");
 
-  async function sendCode(e: React.FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "auth_callback_failed") {
+      setMessage("That sign-in link could not be verified or has expired. Please request a new sign-in link.");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  async function sendMagicLink(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const normalizedEmail = email.trim().toLowerCase();
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      setMessageType("error");
       setMessage("Enter a valid email address.");
       return;
     }
@@ -31,46 +34,19 @@ export default function RiderLoginPage() {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOtp({
         email: normalizedEmail,
-        options: { shouldCreateUser: true },
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/rider/onboarding`,
+        },
       });
+
       if (error) throw error;
 
       setEmail(normalizedEmail);
       setSent(true);
-      setMessageType("success");
-      setMessage("If email delivery is configured, a verification code will arrive shortly. Check your inbox and spam folder.");
+      setMessage("A sign-in link should arrive shortly. Check your inbox and spam folder.");
     } catch (error) {
-      setMessageType("error");
-      setMessage(error instanceof Error ? error.message : "Unable to send verification code.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function verifyCode(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const token = code.replace(/\s/g, "");
-    if (!/^\d{6}$/.test(token)) {
-      setMessageType("error");
-      setMessage("Enter the 6-digit code from your email.");
-      return;
-    }
-
-    setBusy(true);
-    setMessage("");
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.verifyOtp({
-        email: email.trim().toLowerCase(),
-        token,
-        type: "email",
-      });
-      if (error) throw error;
-      router.replace("/rider/onboarding");
-      router.refresh();
-    } catch (error) {
-      setMessageType("error");
-      setMessage(error instanceof Error ? error.message : "That code could not be verified. Request a new code and try again.");
+      setMessage(error instanceof Error ? error.message : "Unable to send sign-in link.");
     } finally {
       setBusy(false);
     }
@@ -92,11 +68,11 @@ export default function RiderLoginPage() {
         </p>
         <h1 className="mt-3 text-3xl font-black">Your journey starts here.</h1>
         <p className="mt-3 text-sm leading-6 text-slate-400">
-          Sign in securely using a one-time code sent to your email.
+          Sign in with your email. Open the secure sign-in link from your inbox to continue rider registration.
         </p>
 
         {!sent ? (
-          <form onSubmit={sendCode} className="mt-8 space-y-4">
+          <form onSubmit={sendMagicLink} className="mt-8 space-y-4">
             <label className="block text-sm font-semibold">
               Email address
               <input
@@ -115,60 +91,37 @@ export default function RiderLoginPage() {
               disabled={busy}
               className="w-full rounded-2xl bg-emerald-400 px-4 py-4 font-bold text-slate-950 transition hover:bg-emerald-300 disabled:opacity-50"
             >
-              {busy ? "Sending code..." : "Send me a login code →"}
+              {busy ? "Sending link..." : "Email me a sign-in link →"}
             </button>
           </form>
         ) : (
-          <form onSubmit={verifyCode} className="mt-8 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
-            <p className="font-semibold">Enter your email code</p>
+          <div className="mt-8 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p className="font-semibold">Check your email</p>
             <p className="break-words text-sm text-slate-300">{email}</p>
-            <label className="block text-sm font-semibold">
-              6-digit verification code
-              <input
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                pattern="[0-9]{6}"
-                maxLength={6}
-                required
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="123456"
-                className="mt-2 w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-4 text-center text-2xl tracking-[0.4em] outline-none placeholder:text-slate-500 focus:border-emerald-400"
-              />
-            </label>
-            <button
-              disabled={busy}
-              className="w-full rounded-2xl bg-emerald-400 px-4 py-4 font-bold text-slate-950 transition hover:bg-emerald-300 disabled:opacity-50"
-            >
-              {busy ? "Verifying..." : "Verify code and continue"}
-            </button>
+            <p className="text-sm leading-6 text-slate-400">
+              Open the sign-in link in the email to continue. If it does not arrive, check spam or try again later.
+            </p>
             <button
               type="button"
-              disabled={busy}
               onClick={() => {
                 setSent(false);
-                setCode("");
                 setMessage("");
               }}
               className="w-full py-2 text-sm text-slate-400 hover:text-white"
             >
               Use a different email
             </button>
-          </form>
+          </div>
         )}
 
         {message && (
-          <p
-            role="status"
-            className={`mt-4 break-words text-sm ${messageType === "error" ? "text-red-300" : "text-emerald-300"}`}
-          >
+          <p role="status" className="mt-4 break-words text-sm text-emerald-300">
             {message}
           </p>
         )}
 
         <p className="mt-8 text-xs leading-5 text-slate-500">
-          Never share your verification code with anyone. Email verification is only the first step; it does not mean your rider documents are approved.
+          Never share your sign-in link with anyone. Email verification is only the first step; it does not mean your rider documents are approved.
         </p>
       </div>
     </main>
