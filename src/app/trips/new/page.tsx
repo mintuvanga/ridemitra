@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 
 export default function NewTripPage() {
   const [origin, setOrigin] = useState("");
@@ -21,41 +20,38 @@ export default function NewTripPage() {
     setBusy(true);
 
     try {
-      const supabase = createClient();
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-      if (authError || !user) {
+      const sessionResponse = await fetch("/api/auth/me", { cache: "no-store" });
+      const session = await sessionResponse.json();
+      if (!sessionResponse.ok || !session.user) {
         setMessage("Please sign in before publishing a journey.");
         return;
       }
 
       const when = new Date(departure);
-
       if (!departure || Number.isNaN(when.getTime()) || when <= new Date()) {
         setMessage("Please choose a future departure date and time.");
         return;
       }
-
       if (origin.trim().toLowerCase() === destination.trim().toLowerCase()) {
         setMessage("Choose two different cities.");
         return;
       }
 
-      const { error } = await supabase.from("trips").insert({
-        driver_id: user.id,
-        origin_city: origin.trim(),
-        destination_city: destination.trim(),
-        departure_at: when.toISOString(),
-        vehicle_type: vehicle,
-        seats_total: Number(seats),
-        seats_available: Number(seats),
-        price_per_seat: Number(price),
-        notes: notes.trim() || null,
-        status: "open",
+      const response = await fetch("/api/trips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          origin_city: origin.trim(),
+          destination_city: destination.trim(),
+          departure_at: when.toISOString(),
+          vehicle_type: vehicle,
+          seats_total: Number(seats),
+          price_per_seat: Number(price),
+          notes: notes.trim() || null,
+        }),
       });
-
-      if (error) throw error;
-
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to publish journey.");
       window.location.href = "/trips";
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to publish journey.");
