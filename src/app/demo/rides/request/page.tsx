@@ -1,102 +1,100 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
-type Decision = "pending" | "accepted" | "rejected";
+type DemoRide = {
+  id: string;
+  pickup: string;
+  destination: string;
+  vehicle: string;
+  fare: number;
+  status: "requested" | "accepted" | "rejected" | "completed";
+  createdAt: string;
+};
+
+const KEY = "ridemitra_demo_ride";
+
+const sampleRide: DemoRide = {
+  id: "DM-1056",
+  pickup: "Ameerpet Metro Station, Hyderabad",
+  destination: "HITEC City, Mindspace, Hyderabad",
+  vehicle: "Auto",
+  fare: 185,
+  status: "requested",
+  createdAt: new Date().toISOString(),
+};
 
 export default function IncomingRideRequestPage() {
   const router = useRouter();
-  const [decision, setDecision] = useState<Decision>("pending");
-  const [showNext, setShowNext] = useState(false);
+  const [ride, setRide] = useState<DemoRide | null>(null);
+  const [notice, setNotice] = useState("");
 
-  const ride = showNext
-    ? { id: "DM-1057", pickup: "Madhapur Metro Station", destination: "Inorbit Mall, Cyberabad", distance: "6.8 km", time: "18 min", fare: "₹220", rider: "Demo Rider 2", initials: "R2" }
-    : { id: "DM-1056", pickup: "Ameerpet Metro Station", destination: "HITEC City, Mindspace", distance: "8.2 km", time: "22 min", fare: "₹185", rider: "Demo Rider", initials: "DR" };
+  useEffect(() => {
+    const sync = () => {
+      try {
+        const saved = localStorage.getItem(KEY);
+        setRide(saved ? (JSON.parse(saved) as DemoRide) : null);
+      } catch { setRide(null); }
+    };
+    sync();
+    window.addEventListener("storage", sync);
+    const timer = window.setInterval(sync, 1000);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.clearInterval(timer);
+    };
+  }, []);
 
-  function decide(next: Exclude<Decision, "pending">) {
+  function decide(next: "accepted" | "rejected") {
+    const current = ride ?? sampleRide;
+    const updated = { ...current, status: next };
+    localStorage.setItem(KEY, JSON.stringify(updated));
+    setRide(updated);
+    setNotice(next === "accepted" ? "Passenger demo status updated to accepted." : "Passenger demo status updated to rejected.");
     if (next === "accepted") {
-      window.open("https://www.google.com/maps/dir/?api=1&origin=" + encodeURIComponent(showNext ? "Madhapur Metro Station, Hyderabad" : "Ameerpet Metro Station, Hyderabad") + "&destination=" + encodeURIComponent(showNext ? "Inorbit Mall, Cyberabad, Hyderabad" : "HITEC City, Mindspace, Hyderabad") + "&travelmode=driving", "_blank", "noopener,noreferrer");
+      const url = "https://www.google.com/maps/dir/?api=1&origin=" + encodeURIComponent(current.pickup) + "&destination=" + encodeURIComponent(current.destination) + "&travelmode=driving";
+      window.open(url, "_blank", "noopener,noreferrer");
       router.push("/demo/rides/active");
-      return;
     }
-    setDecision(next);
   }
 
-  function nextRequest() {
-    setShowNext(true);
-    setDecision("pending");
-  }
+  const current = ride ?? sampleRide;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-blue-50 px-4 py-6 text-slate-900 sm:px-6">
+    <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-blue-50 px-4 py-7 text-slate-900 sm:px-6">
       <div className="mx-auto max-w-xl">
         <header className="flex items-center justify-between rounded-2xl border border-sky-100 bg-white px-5 py-4 shadow-sm">
           <Link href="/demo" className="text-xl font-black">Ride<span className="text-sky-600">Mitra</span></Link>
-          <span className="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-extrabold text-violet-800">DEMO REQUEST</span>
+          <span className="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-extrabold text-violet-800">DRIVER DEMO</span>
         </header>
-
-        {decision === "pending" ? (
-          <section className="mt-6 overflow-hidden rounded-3xl border border-sky-100 bg-white shadow-xl shadow-sky-100">
-            <div className="bg-gradient-to-r from-sky-600 to-blue-700 px-6 py-7 text-white">
-              <div className="flex items-center justify-between gap-3">
-                <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-100">New ride request · {ride.id}</p><h1 className="mt-2 text-3xl font-black">Ride request!</h1><p className="mt-2 text-sm text-sky-50">Review the trip details and choose an action.</p></div>
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-3xl" aria-hidden="true">🛺</div>
-              </div>
-            </div>
-
-            <div className="p-5 sm:p-7">
-              <div className="rounded-2xl border border-sky-100 bg-sky-50 p-5">
-                <p className="text-sm font-semibold text-slate-500">Estimated fare</p>
-                <p className="mt-1 text-4xl font-black text-sky-700">{ride.fare}</p>
-                <p className="mt-1 text-xs text-slate-500">Sample fare · demo only</p>
-              </div>
-
-              <div className="mt-5 rounded-2xl border border-slate-100 p-5">
-                <div className="flex gap-3">
-                  <div className="flex w-7 shrink-0 flex-col items-center pt-1"><span className="h-3 w-3 rounded-full border-[3px] border-sky-600 bg-white" /><span className="my-1 h-12 border-l-2 border-dashed border-slate-300" /><span className="h-3 w-3 rounded-sm bg-emerald-500" /></div>
-                  <div className="min-w-0 flex-1 space-y-5">
-                    <div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Pickup location</p><p className="mt-1 text-base font-extrabold">{ride.pickup}</p></div>
-                    <div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Destination</p><p className="mt-1 text-base font-extrabold">{ride.destination}</p></div>
-                  </div>
-                </div>
-                <div className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
-                  <div><p className="text-xs text-slate-500">Trip distance</p><p className="mt-1 font-extrabold">{ride.distance}</p></div>
-                  <div><p className="text-xs text-slate-500">Estimated duration</p><p className="mt-1 font-extrabold">{ride.time}</p></div>
-                </div>
-              </div>
-
-              <div className="mt-5 flex items-center gap-3 rounded-2xl bg-slate-50 p-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-sky-100 font-black text-sky-700">{ride.initials}</div>
-                <div><p className="font-extrabold">{ride.rider}</p><p className="text-sm text-slate-500">Passenger profile · sample only</p></div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <button type="button" onClick={() => decide("rejected")} className="flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-rose-200 bg-rose-50 px-4 py-3 font-extrabold text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-4 focus:ring-rose-100"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-600 text-lg text-white" aria-hidden="true">×</span> Reject ride</button>
-                <button type="button" onClick={() => decide("accepted")} className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 font-extrabold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-100"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-lg" aria-hidden="true">✓</span> Accept ride</button>
-              </div>
-              <p className="mt-4 text-center text-xs text-slate-500">Demo interaction only. This does not contact a passenger or dispatch a real ride.</p>
-            </div>
-          </section>
-        ) : (
-          <section className="mt-6 rounded-3xl border border-sky-100 bg-white p-7 text-center shadow-xl shadow-sky-100 sm:p-9">
-            <div className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full text-5xl font-black text-white ${decision === "accepted" ? "bg-emerald-500" : "bg-rose-500"}`} aria-hidden="true">{decision === "accepted" ? "✓" : "×"}</div>
-            <h1 className="mt-5 text-3xl font-black">{decision === "accepted" ? "Ride accepted!" : "Ride rejected"}</h1>
-            <p className="mt-3 leading-6 text-slate-600">{decision === "accepted" ? "This sample request is now marked accepted in this demo screen." : "This sample request has been declined. You can return to rides or try another demo request."}</p>
-            <div className="mt-5 rounded-2xl bg-sky-50 p-5 text-left">
-              <div className="flex justify-between gap-3"><span className="text-sm text-slate-500">Destination</span><span className="text-right font-bold">{ride.destination}</span></div>
-              <div className="mt-3 flex justify-between gap-3"><span className="text-sm text-slate-500">Sample fare</span><span className="font-black text-sky-700">{ride.fare}</span></div>
-              <div className="mt-3 flex justify-between gap-3"><span className="text-sm text-slate-500">Request</span><span className="font-bold">{ride.id}</span></div>
-            </div>
-            <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-left text-xs leading-5 text-amber-900">Demo only: no live ride has been accepted or rejected, and no payment is made.</p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {decision === "rejected" && !showNext ? <button onClick={nextRequest} type="button" className="rounded-xl bg-sky-600 px-4 py-3 font-extrabold text-white hover:bg-sky-700">Show another request</button> : null}
-              <Link href="/demo/rides" className="rounded-xl border border-sky-200 px-4 py-3 font-extrabold text-sky-700 hover:bg-sky-50">Back to my rides</Link>
-              <Link href="/demo" className="rounded-xl bg-slate-900 px-4 py-3 font-extrabold text-white hover:bg-slate-800">Demo home</Link>
-            </div>
-          </section>
-        )}
+        <section className="mt-6 rounded-3xl bg-gradient-to-r from-sky-600 to-blue-700 px-6 py-7 text-white">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-100">Incoming request · {current.id}</p>
+          <h1 className="mt-2 text-3xl font-black">Ride request</h1>
+          <p className="mt-2 text-sm text-sky-50">Review the passenger demo request and choose an action.</p>
+        </section>
+        {!ride && <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">No passenger demo request is saved yet. This sample request is shown for preview. For a connected test, open the passenger demo and request a ride first.</p>}
+        <section className="mt-5 rounded-3xl border border-sky-100 bg-white p-5 shadow-sm sm:p-7">
+          <p className="text-sm font-semibold text-slate-500">Illustrative fare</p>
+          <p className="mt-1 text-4xl font-black text-sky-700">₹{current.fare}</p>
+          <p className="mt-1 text-xs text-slate-500">Demo only · no payment</p>
+          <div className="mt-5 rounded-2xl border border-slate-100 p-5">
+            <p className="text-xs font-bold uppercase text-slate-500">Pickup location</p><p className="mt-1 font-extrabold">{current.pickup}</p>
+            <div className="my-4 border-t border-slate-100" />
+            <p className="text-xs font-bold uppercase text-slate-500">Destination</p><p className="mt-1 font-extrabold">{current.destination}</p>
+            <p className="mt-4 text-sm text-slate-500">Vehicle: <strong className="text-slate-800">{current.vehicle}</strong></p>
+            <p className="mt-1 text-sm text-slate-500">Passenger: <strong className="text-slate-800">Demo Passenger</strong></p>
+          </div>
+          {notice && <p role="status" className="mt-4 rounded-xl bg-sky-50 p-3 text-sm text-sky-800">{notice}</p>}
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <button type="button" onClick={() => decide("rejected")} className="min-h-14 rounded-2xl border-2 border-rose-200 bg-rose-50 px-4 py-3 font-extrabold text-rose-700 hover:bg-rose-100">× Reject ride</button>
+            <button type="button" onClick={() => decide("accepted")} className="min-h-14 rounded-2xl bg-emerald-600 px-4 py-3 font-extrabold text-white hover:bg-emerald-700">✓ Accept ride</button>
+          </div>
+          <Link href="/demo/passenger" className="mt-4 block rounded-xl border border-sky-200 px-4 py-3 text-center font-bold text-sky-700 hover:bg-sky-50">View passenger demo status →</Link>
+          <Link href="/demo/rides" className="mt-4 block text-center text-sm font-bold text-sky-700">← Back to driver rides</Link>
+        </section>
+        <p className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><strong>Demo only:</strong> actions update the passenger demo in the same browser. No real ride is dispatched or booked.</p>
       </div>
     </main>
   );
