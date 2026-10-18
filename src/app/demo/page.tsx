@@ -52,6 +52,8 @@ export default function DemoDriverPage() {
           </div>
         </section>
 
+        <section className="mt-6 rounded-3xl border border-sky-200 bg-sky-50 p-5 sm:p-6"><p className="text-sm font-extrabold uppercase tracking-wide text-sky-700">Test both sides</p><h2 className="mt-1 text-2xl font-black">Passenger + Driver demo</h2><p className="mt-2 text-sm leading-6 text-slate-600">Open the passenger demo in one tab, then open the driver request in another tab in this same browser. Request, accept or reject, and watch the passenger status update.</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><Link href="/demo/passenger" className="rounded-xl bg-sky-600 px-4 py-3 text-center font-extrabold text-white hover:bg-sky-700">Open Passenger Demo →</Link><Link href="/demo/rides/request" className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-center font-extrabold text-sky-700 hover:bg-sky-100">Open Driver Request →</Link></div></section>
+
         <section className="mt-6 grid gap-4 sm:grid-cols-3">
           <Link href="/demo/rides" className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm transition hover:border-sky-300 hover:bg-sky-50"><p className="text-sm font-bold text-sky-700">DRIVER</p><h2 className="mt-2 text-lg font-black">My rides ↗</h2><p className="mt-1 text-sm text-slate-500">Open the rides interface.</p></Link>
           <Link href="/demo/earnings" className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm transition hover:border-sky-300 hover:bg-sky-50"><p className="text-sm font-bold text-sky-700">PAYMENTS</p><h2 className="mt-2 text-lg font-black">Earnings ↗</h2><p className="mt-1 text-sm text-slate-500">Preview earnings and payouts.</p></Link>
