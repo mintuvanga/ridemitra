@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
 export default function RiderOnboardingPage() {
   const router = useRouter();
@@ -13,15 +12,13 @@ export default function RiderOnboardingPage() {
   useEffect(() => {
     async function checkSession() {
       try {
-        const supabase = createClient();
-        const { data, error } = await supabase.auth.getUser();
-
-        if (error || !data.user) {
+        const response = await fetch("/api/auth/me", { cache: "no-store" });
+        const result = await response.json();
+        if (!response.ok || !result.user) {
           router.replace("/rider/login");
           return;
         }
-
-        setEmail(data.user.email ?? "");
+        setEmail(result.user.email ?? "");
       } catch {
         router.replace("/rider/login");
       } finally {
@@ -80,8 +77,7 @@ export default function RiderOnboardingPage() {
 
           <button
             onClick={async () => {
-              const supabase = createClient();
-              await supabase.auth.signOut();
+              await fetch("/api/auth/logout", { method: "POST" });
               router.replace("/rider/login");
             }}
             className="mt-6 w-full rounded-xl border border-white/15 py-3 text-sm font-semibold hover:bg-white/5"
