@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 
 type Trip = {
   id: string;
@@ -31,30 +30,13 @@ export default function TripsPage() {
     setMessage("");
 
     try {
-      const supabase = createClient();
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-
-      if (authError || !authData.user) {
-        setUserId("");
-        setTrips([]);
-        setMessage("Sign in to discover available journeys.");
-        return;
-      }
-
-      setUserId(authData.user.id);
-
-      const { data, error } = await supabase
-        .from("trips")
-        .select("id, driver_id, origin_city, destination_city, departure_at, vehicle_type, seats_available, price_per_seat, notes")
-        .eq("status", "open")
-        .gt("departure_at", new Date().toISOString())
-        .gt("seats_available", 0)
-        .order("departure_at", { ascending: true });
-
-      if (error) throw error;
-
-      setTrips((data ?? []) as Trip[]);
-      setMessage(data?.length ? "" : "No upcoming journeys yet. Be the first to publish one!");
+      const response = await fetch("/api/trips", { cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to load journeys.");
+      setUserId(result.user?.id ?? "");
+      const data = (result.trips ?? []) as Trip[];
+      setTrips(data);
+      setMessage(data.length ? "" : "No upcoming journeys yet. Be the first to publish one!");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to load journeys.");
     } finally {
@@ -81,30 +63,16 @@ export default function TripsPage() {
     setBookingMessages((previous) => ({ ...previous, [trip.id]: "" }));
 
     try {
-      const supabase = createClient();
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-
-      if (authError || !authData.user) {
-        throw new Error("Your session has expired. Please sign in again.");
-      }
-
-      const { error } = await supabase.from("bookings").insert({
-        trip_id: trip.id,
-        passenger_id: authData.user.id,
-        seats_requested: 1,
-        status: "pending",
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trip_id: trip.id }),
       });
-
-      if (error) {
-        if (error.code === "23505") {
-          throw new Error("You have already requested this journey.");
-        }
-        throw error;
-      }
-
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to send request.");
       setBookingMessages((previous) => ({
         ...previous,
-        [trip.id]: "Seat request sent! Waiting for driver confirmation.",
+        [trip.id]: result.message || "Seat request sent! Waiting for driver confirmation.",
       }));
     } catch (error) {
       setBookingMessages((previous) => ({
