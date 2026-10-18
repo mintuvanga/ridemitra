@@ -53,8 +53,8 @@ export default function DemoDriverPage() {
         </section>
 
         <section className="mt-6 grid gap-4 sm:grid-cols-3">
-          <Link href="/driver/rides" className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm transition hover:border-sky-300 hover:bg-sky-50"><p className="text-sm font-bold text-sky-700">DRIVER</p><h2 className="mt-2 text-lg font-black">My rides ↗</h2><p className="mt-1 text-sm text-slate-500">Open the rides interface.</p></Link>
-          <Link href="/driver/earnings" className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm transition hover:border-sky-300 hover:bg-sky-50"><p className="text-sm font-bold text-sky-700">PAYMENTS</p><h2 className="mt-2 text-lg font-black">Earnings ↗</h2><p className="mt-1 text-sm text-slate-500">Preview earnings and payouts.</p></Link>
+          <Link href="/demo/rides" className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm transition hover:border-sky-300 hover:bg-sky-50"><p className="text-sm font-bold text-sky-700">DRIVER</p><h2 className="mt-2 text-lg font-black">My rides ↗</h2><p className="mt-1 text-sm text-slate-500">Open the rides interface.</p></Link>
+          <Link href="/demo/earnings" className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm transition hover:border-sky-300 hover:bg-sky-50"><p className="text-sm font-bold text-sky-700">PAYMENTS</p><h2 className="mt-2 text-lg font-black">Earnings ↗</h2><p className="mt-1 text-sm text-slate-500">Preview earnings and payouts.</p></Link>
           <Link href="/driver" className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm transition hover:border-sky-300 hover:bg-sky-50"><p className="text-sm font-bold text-sky-700">WORKSPACE</p><h2 className="mt-2 text-lg font-black">Driver dashboard ↗</h2><p className="mt-1 text-sm text-slate-500">View the standard onboarding page.</p></Link>
         </section>
 
