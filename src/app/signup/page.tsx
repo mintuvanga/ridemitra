@@ -30,7 +30,7 @@ export default function SignupPage() {
         setStage("verify");
         setMessage(result.message || "Check your email for the six-digit verification code.");
       } else {
-        window.location.href = "/trips";
+        window.location.href = "/driver/documents";
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Registration failed.");
