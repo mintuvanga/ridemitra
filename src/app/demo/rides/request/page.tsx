@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type Decision = "pending" | "accepted" | "rejected";
 
 export default function IncomingRideRequestPage() {
+  const router = useRouter();
   const [decision, setDecision] = useState<Decision>("pending");
   const [showNext, setShowNext] = useState(false);
 
@@ -14,6 +16,10 @@ export default function IncomingRideRequestPage() {
     : { id: "DM-1056", pickup: "Ameerpet Metro Station", destination: "HITEC City, Mindspace", distance: "8.2 km", time: "22 min", fare: "₹185", rider: "Demo Rider", initials: "DR" };
 
   function decide(next: Exclude<Decision, "pending">) {
+    if (next === "accepted") {
+      router.push("/demo/rides/active");
+      return;
+    }
     setDecision(next);
   }
 
