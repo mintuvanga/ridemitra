@@ -15,7 +15,7 @@ export default function DriverHomePage() {
       <div className="mx-auto min-h-screen max-w-6xl px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between gap-4 rounded-2xl border border-sky-100 bg-white px-4 py-3 shadow-sm sm:px-6">
           <Link href="/" className="text-xl font-black tracking-tight">Ride<span className="text-sky-600">Mitra</span><span className="ml-2 text-sm font-semibold text-slate-500">Driver</span></Link>
-          <div className="flex items-center gap-2"><Link href="/driver/rides" className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-sky-700">My rides →</Link><Link href="/support" className="rounded-xl border border-sky-200 px-4 py-2 text-sm font-bold text-sky-700 transition hover:bg-sky-50">Help & support ↗</Link></div>
+          <div className="flex flex-wrap items-center gap-2"><Link href="/driver/rides" className="rounded-xl bg-sky-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-sky-700">My rides →</Link><Link href="/driver/earnings" className="rounded-xl border border-sky-200 px-3 py-2 text-sm font-bold text-sky-700 transition hover:bg-sky-50">Earnings ₹</Link><Link href="/support" className="rounded-xl border border-sky-200 px-3 py-2 text-sm font-bold text-sky-700 transition hover:bg-sky-50">Help ↗</Link></div>
         </header>
 
         <section className="rm-page-enter mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-sky-600 via-sky-600 to-blue-700 p-6 text-white shadow-xl shadow-sky-200 sm:p-9">
