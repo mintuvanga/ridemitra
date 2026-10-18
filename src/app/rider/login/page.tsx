@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function RiderLoginPage() {
   const router = useRouter();
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -15,9 +15,10 @@ export default function RiderLoginPage() {
 
   async function sendOtp(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const normalizedEmail = email.trim().toLowerCase();
 
-    if (!/^[6-9]\d{9}$/.test(phone)) {
-      setMessage("Enter a valid 10-digit Indian mobile number.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setMessage("Enter a valid email address.");
       return;
     }
 
@@ -27,17 +28,18 @@ export default function RiderLoginPage() {
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOtp({
-        phone: `+91${phone}`,
+        email: normalizedEmail,
         options: { shouldCreateUser: true },
       });
 
       if (error) throw error;
 
+      setEmail(normalizedEmail);
       setOtpSent(true);
-      setMessage("OTP requested. Check your phone for the SMS code.");
+      setMessage("Code requested. Check your email inbox and spam folder.");
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Unable to request OTP."
+        error instanceof Error ? error.message : "Unable to request email code."
       );
     } finally {
       setBusy(false);
@@ -48,7 +50,7 @@ export default function RiderLoginPage() {
     e.preventDefault();
 
     if (!/^\d{6}$/.test(otp)) {
-      setMessage("Enter the 6-digit OTP.");
+      setMessage("Enter the 6-digit code from your email.");
       return;
     }
 
@@ -58,9 +60,9 @@ export default function RiderLoginPage() {
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.verifyOtp({
-        phone: `+91${phone}`,
+        email: email.trim().toLowerCase(),
         token: otp,
-        type: "sms",
+        type: "email",
       });
 
       if (error) throw error;
@@ -69,7 +71,7 @@ export default function RiderLoginPage() {
       router.refresh();
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "OTP verification failed."
+        error instanceof Error ? error.message : "Email code verification failed."
       );
     } finally {
       setBusy(false);
@@ -94,49 +96,42 @@ export default function RiderLoginPage() {
           Your journey starts here.
         </h1>
         <p className="mt-3 text-sm leading-6 text-slate-400">
-          Sign in with your mobile number. Verify your number before starting
+          Sign in with your email address. Verify your email before starting
           rider registration and document checks.
         </p>
 
         {!otpSent ? (
           <form onSubmit={sendOtp} className="mt-8 space-y-4">
             <label className="block text-sm font-semibold">
-              Mobile number
-              <div className="mt-2 flex overflow-hidden rounded-2xl border border-white/15 bg-white/5 focus-within:border-emerald-400">
-                <span className="flex items-center border-r border-white/10 px-4 text-slate-300">
-                  +91
-                </span>
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel-national"
-                  maxLength={10}
-                  required
-                  value={phone}
-                  onChange={(e) =>
-                    setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
-                  }
-                  placeholder="10-digit mobile number"
-                  className="min-w-0 flex-1 bg-transparent px-3 py-4 outline-none placeholder:text-slate-500"
-                />
-              </div>
+              Email address
+              <input
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                maxLength={254}
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="mt-2 w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-4 outline-none placeholder:text-slate-500 focus:border-emerald-400"
+              />
             </label>
 
             <button
               disabled={busy}
               className="w-full rounded-2xl bg-emerald-400 px-4 py-4 font-bold text-slate-950 transition hover:bg-emerald-300 disabled:opacity-50"
             >
-              {busy ? "Requesting OTP..." : "Send OTP →"}
+              {busy ? "Sending code..." : "Send email code →"}
             </button>
           </form>
         ) : (
           <form onSubmit={verifyOtp} className="mt-8 space-y-4">
             <p className="text-sm text-slate-300">
-              Enter the code sent to +91 {phone}.
+              Enter the 6-digit code sent to {email}.
             </p>
 
             <label className="block text-sm font-semibold">
-              6-digit OTP
+              6-digit email code
               <input
                 type="text"
                 inputMode="numeric"
@@ -147,7 +142,7 @@ export default function RiderLoginPage() {
                 onChange={(e) =>
                   setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
                 }
-                placeholder="Enter OTP"
+                placeholder="Enter code"
                 className="mt-2 w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-4 text-center text-2xl tracking-[0.4em] outline-none focus:border-emerald-400"
               />
             </label>
@@ -168,7 +163,7 @@ export default function RiderLoginPage() {
               }}
               className="w-full py-2 text-sm text-slate-400 hover:text-white"
             >
-              Change phone number
+              Change email address
             </button>
           </form>
         )}
@@ -180,8 +175,8 @@ export default function RiderLoginPage() {
         )}
 
         <p className="mt-8 text-xs leading-5 text-slate-500">
-          Never share your OTP with anyone. Phone verification is only the
-          first step; it does not mean your rider documents are approved.
+          Never share your sign-in code with anyone. Email verification is only
+          the first step; it does not mean your rider documents are approved.
         </p>
       </div>
     </main>
