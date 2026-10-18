@@ -1,19 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function RiderLoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
+  const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
-  async function sendOtp(e: React.FormEvent<HTMLFormElement>) {
+  async function sendMagicLink(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -29,49 +26,20 @@ export default function RiderLoginPage() {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOtp({
         email: normalizedEmail,
-        options: { shouldCreateUser: true },
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/rider/onboarding`,
+        },
       });
 
       if (error) throw error;
 
       setEmail(normalizedEmail);
-      setOtpSent(true);
-      setMessage("Code requested. Check your email inbox and spam folder.");
+      setSent(true);
+      setMessage("If Supabase email delivery is configured for this address, a sign-in link will arrive shortly. Check your inbox and spam folder.");
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Unable to request email code."
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function verifyOtp(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    if (!/^\d{6}$/.test(otp)) {
-      setMessage("Enter the 6-digit code from your email.");
-      return;
-    }
-
-    setBusy(true);
-    setMessage("");
-
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.verifyOtp({
-        email: email.trim().toLowerCase(),
-        token: otp,
-        type: "email",
-      });
-
-      if (error) throw error;
-
-      router.replace("/rider/onboarding");
-      router.refresh();
-    } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Email code verification failed."
+        error instanceof Error ? error.message : "Unable to send sign-in link."
       );
     } finally {
       setBusy(false);
@@ -96,12 +64,12 @@ export default function RiderLoginPage() {
           Your journey starts here.
         </h1>
         <p className="mt-3 text-sm leading-6 text-slate-400">
-          Sign in with your email address. Verify your email before starting
-          rider registration and document checks.
+          Sign in with your email. Open the secure sign-in link from your inbox
+          to continue rider registration.
         </p>
 
-        {!otpSent ? (
-          <form onSubmit={sendOtp} className="mt-8 space-y-4">
+        {!sent ? (
+          <form onSubmit={sendMagicLink} className="mt-8 space-y-4">
             <label className="block text-sm font-semibold">
               Email address
               <input
@@ -121,51 +89,28 @@ export default function RiderLoginPage() {
               disabled={busy}
               className="w-full rounded-2xl bg-emerald-400 px-4 py-4 font-bold text-slate-950 transition hover:bg-emerald-300 disabled:opacity-50"
             >
-              {busy ? "Sending code..." : "Send email code →"}
+              {busy ? "Sending link..." : "Email me a sign-in link →"}
             </button>
           </form>
         ) : (
-          <form onSubmit={verifyOtp} className="mt-8 space-y-4">
-            <p className="text-sm text-slate-300">
-              Enter the 6-digit code sent to {email}.
+          <div className="mt-8 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p className="font-semibold">Check your email</p>
+            <p className="break-words text-sm text-slate-300">{email}</p>
+            <p className="text-sm leading-6 text-slate-400">
+              Open the sign-in link in the email to continue. If it does not
+              arrive, check spam or try again later.
             </p>
-
-            <label className="block text-sm font-semibold">
-              6-digit email code
-              <input
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                required
-                value={otp}
-                onChange={(e) =>
-                  setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                }
-                placeholder="Enter code"
-                className="mt-2 w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-4 text-center text-2xl tracking-[0.4em] outline-none focus:border-emerald-400"
-              />
-            </label>
-
-            <button
-              disabled={busy}
-              className="w-full rounded-2xl bg-emerald-400 px-4 py-4 font-bold text-slate-950 transition hover:bg-emerald-300 disabled:opacity-50"
-            >
-              {busy ? "Verifying..." : "Verify and continue"}
-            </button>
-
             <button
               type="button"
               onClick={() => {
-                setOtpSent(false);
-                setOtp("");
+                setSent(false);
                 setMessage("");
               }}
               className="w-full py-2 text-sm text-slate-400 hover:text-white"
             >
-              Change email address
+              Use a different email
             </button>
-          </form>
+          </div>
         )}
 
         {message && (
@@ -175,7 +120,7 @@ export default function RiderLoginPage() {
         )}
 
         <p className="mt-8 text-xs leading-5 text-slate-500">
-          Never share your sign-in code with anyone. Email verification is only
+          Never share your sign-in link with anyone. Email verification is only
           the first step; it does not mean your rider documents are approved.
         </p>
       </div>
