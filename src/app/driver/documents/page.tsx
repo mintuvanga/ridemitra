@@ -279,9 +279,13 @@ export default function DriverDocumentsPage() {
         </header>
         <section className="rounded-3xl border border-sky-100 bg-white p-5 shadow-xl shadow-sky-100/60 sm:p-8">
           <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-100 text-2xl">🛡️</div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-700">Step 1 of driver approval</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight">Verify your documents</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600">Take a guided driver selfie and select your vehicle documents. Your driver account stays pending until secure upload and verification checks are completed.</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-700">Driver onboarding · Step 1 of 2</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight">Driver identity check</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-600">Start with a guided selfie, then add your driving licence and vehicle documents. Your profile remains pending until the required checks are completed.</p>
+          <div className="mt-5 grid grid-cols-2 gap-3" aria-label="Verification progress">
+            <div className="rounded-2xl border-2 border-sky-500 bg-sky-50 p-3"><div className="flex items-center gap-2 text-sm font-extrabold text-sky-800"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-600 text-white">1</span> Selfie check</div><p className="mt-2 text-xs text-slate-600">Center your face and capture a clear photo</p></div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3"><div className="flex items-center gap-2 text-sm font-extrabold text-slate-700"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-300 text-white">2</span> Documents</div><p className="mt-2 text-xs text-slate-600">Licence, RC and insurance details</p></div>
+          </div>
           <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900"><strong>Important:</strong> Selecting files here does not upload or verify them. Secure file storage and a real identity-verification provider must be connected before submissions can be accepted. We will not mark documents as verified without those checks.</div>
           <form onSubmit={submit} className="mt-6 space-y-4">
             {requiredDocs.map((doc, index) => (
@@ -315,13 +319,15 @@ export default function DriverDocumentsPage() {
                   <div><h2 className="font-bold">Driver selfie check</h2><p className="mt-1 text-xs text-slate-300">Step 1 of 2 · Position and lighting</p></div>
                   <button type="button" onClick={stopCamera} className="rounded-lg border border-white/20 px-3 py-1.5 text-sm">Close</button>
                 </div>
-                <div className="relative mt-3 overflow-hidden rounded-2xl bg-black">
-                  <video ref={videoRef} autoPlay muted playsInline className="aspect-[4/3] w-full object-cover [transform:scaleX(-1)]" />
-                  <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 h-[68%] w-[52%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-4 border-sky-300 shadow-[0_0_0_999px_rgba(0,0,0,0.28)]" />
+                <div className="relative mx-auto mt-4 w-full max-w-sm overflow-hidden rounded-[2rem] border border-white/10 bg-black">
+                  <video ref={videoRef} autoPlay muted playsInline className="aspect-[3/4] max-h-[520px] w-full object-cover [transform:scaleX(-1)]" />
+                  <div aria-hidden="true" className={`pointer-events-none absolute left-1/2 top-1/2 h-[72%] w-[62%] -translate-x-1/2 -translate-y-1/2 rounded-[48%] border-[3px] ${faceReady ? "border-emerald-400" : "border-sky-300"} shadow-[0_0_0_999px_rgba(0,0,0,0.34)] transition-colors`} />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-12 text-center text-xs font-semibold text-white">Keep your full face inside the oval</div>
                 </div>
-                <p className={`mt-3 rounded-xl p-3 text-sm font-semibold ${faceReady ? "bg-emerald-500/20 text-emerald-200" : "bg-white/10 text-sky-100"}`} role="status">{faceStatus}</p>
-                <button type="button" disabled={!faceReady} onClick={captureSelfie} className="mt-3 w-full rounded-xl bg-sky-500 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-600">Capture photo</button>
-                <p className="mt-2 text-xs leading-5 text-slate-300">We check one centered face and acceptable lighting over several frames. This camera step does not prove liveness or match your face to an identity document.</p>
+                <div className={`mt-4 flex items-start gap-3 rounded-xl p-3 ${faceReady ? "bg-emerald-500/15 text-emerald-200" : "bg-white/10 text-sky-100"}`} role="status"><span className="mt-0.5 text-lg">{faceReady ? "✓" : "◎"}</span><div><p className="text-sm font-bold">{faceReady ? "Ready to capture" : "Positioning check"}</p><p className="mt-1 text-xs leading-5">{faceStatus}</p></div></div>
+                <button type="button" disabled={!faceReady} onClick={captureSelfie} className="mt-4 w-full rounded-xl bg-sky-500 px-4 py-3.5 font-bold text-white shadow-lg shadow-sky-950/30 disabled:cursor-not-allowed disabled:bg-slate-600"><span className="mr-2">●</span> Capture selfie</button>
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px] text-slate-300"><div className="rounded-lg bg-white/5 p-2"><div className="mb-1 text-base">◎</div>One face</div><div className="rounded-lg bg-white/5 p-2"><div className="mb-1 text-base">☼</div>Good lighting</div><div className="rounded-lg bg-white/5 p-2"><div className="mb-1 text-base">▣</div>Centered</div></div>
+                <p className="mt-3 text-[11px] leading-5 text-slate-400">This checks face position and lighting only. Real identity matching and liveness verification still require a secure verification provider.</p>
               </div>
             )}
             <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
