@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 
 type TripSummary = {
   origin_city: string;
@@ -46,42 +45,17 @@ export default function BookingsPage() {
     setMessage("");
 
     try {
-      const supabase = createClient();
-      const { data: authData, error: authError } =
-        await supabase.auth.getUser();
-
-      if (authError || !authData.user) {
+      const response = await fetch("/api/bookings", { cache: "no-store" });
+      const result = await response.json();
+      if (response.status === 401) {
         setSignedIn(false);
         setBookings([]);
-        setMessage("Sign in to see your seat requests.");
+        setMessage(result.error || "Sign in to see your seat requests.");
         return;
       }
-
+      if (!response.ok) throw new Error(result.error || "Unable to load your bookings.");
       setSignedIn(true);
-
-      const { data, error } = await supabase
-        .from("bookings")
-        .select(`
-          id,
-          trip_id,
-          passenger_id,
-          seats_requested,
-          status,
-          created_at,
-          trip:trips (
-            origin_city,
-            destination_city,
-            departure_at,
-            vehicle_type,
-            price_per_seat
-          )
-        `)
-        .eq("passenger_id", authData.user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      setBookings((data ?? []) as unknown as Booking[]);
+      setBookings((result.bookings ?? []) as Booking[]);
     } catch (error) {
       setMessage(
         error instanceof Error
