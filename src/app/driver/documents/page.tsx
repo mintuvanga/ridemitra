@@ -40,6 +40,7 @@ export default function DriverDocumentsPage() {
     setCameraError("");
     setFaceReady(false);
     setFaceStatus("Opening camera…");
+    let stage: "face-detection" | "camera" = "face-detection";
     try {
       setFaceStatus("Loading automatic face detection…");
       const vision = await FilesetResolver.forVisionTasks(
@@ -53,6 +54,10 @@ export default function DriverDocumentsPage() {
         runningMode: "VIDEO",
         minDetectionConfidence: 0.6,
       });
+      stage = "camera";
+      if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+        throw new Error("CAMERA_API_UNAVAILABLE");
+      }
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -67,9 +72,24 @@ export default function DriverDocumentsPage() {
         }
       }, 100);
     } catch (error) {
-      setCameraError(error instanceof Error && error.name === "NotAllowedError"
-        ? "Camera permission was denied. Allow camera access in your browser settings and try again."
-        : "Could not access your camera. Check that a camera is connected and that this page is using HTTPS.");
+      detectorRef.current?.close();
+      detectorRef.current = null;
+      const name = error instanceof Error ? error.name : "";
+      if (name === "NotAllowedError") {
+        setCameraError("Camera permission was denied or blocked. In your browser address-bar site settings, allow Camera, then reload this page and try again.");
+      } else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+        setCameraError("No camera was found. Connect or enable a webcam, then try again.");
+      } else if (name === "NotReadableError" || name === "TrackStartError") {
+        setCameraError("The camera is busy or unavailable. Close other apps or browser tabs using the camera, then try again.");
+      } else if (name === "OverconstrainedError") {
+        setCameraError("The camera cannot meet the requested settings. Try another camera or browser.");
+      } else if (name === "CAMERA_API_UNAVAILABLE") {
+        setCameraError("Camera access is unavailable. Open this page directly at its HTTPS address and allow camera access in your browser settings.");
+      } else if (stage === "face-detection") {
+        setCameraError("The face-detection model could not load. Check your internet connection or network restrictions, then refresh and try again.");
+      } else {
+        setCameraError("Camera could not start. Check site camera permission, make sure no other app is using the camera, and try again.");
+      }
     }
   }
 
