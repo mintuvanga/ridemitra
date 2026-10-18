@@ -43,17 +43,43 @@ export default function DriverDocumentsPage() {
     let stage: "face-detection" | "camera" = "face-detection";
     try {
       setFaceStatus("Loading automatic face detection…");
-      const vision = await FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
-      );
-      detectorRef.current = await FaceDetector.createFromOptions(vision, {
+      let vision;
+      try {
+        vision = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
+        );
+      } catch {
+        vision = await FilesetResolver.forVisionTasks(
+          "https://unpkg.com/@mediapipe/tasks-vision@0.10.22/wasm"
+        );
+      }
+
+      const detectorOptions = {
         baseOptions: {
-          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
-          delegate: "CPU",
+          delegate: "CPU" as const,
         },
-        runningMode: "VIDEO",
+        runningMode: "VIDEO" as const,
         minDetectionConfidence: 0.6,
-      });
+      };
+      const modelUrls = [
+        "https://raw.githubusercontent.com/noname0310/mediapipe-annotation-gen/master/blaze_face_short_range.tflite",
+        "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
+      ];
+      let lastModelError: unknown;
+      for (const modelAssetPath of modelUrls) {
+        try {
+          detectorRef.current = await FaceDetector.createFromOptions(vision, {
+            ...detectorOptions,
+            baseOptions: { ...detectorOptions.baseOptions, modelAssetPath },
+          });
+          break;
+        } catch (error) {
+          lastModelError = error;
+        }
+      }
+      if (!detectorRef.current) {
+        throw lastModelError ?? new Error("FACE_MODEL_LOAD_FAILED");
+      }
       stage = "camera";
       if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
         throw new Error("CAMERA_API_UNAVAILABLE");
