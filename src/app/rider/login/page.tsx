@@ -28,7 +28,7 @@ export default function RiderLoginPage() {
         email: normalizedEmail,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/rider/onboarding`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/rider/onboarding`,
         },
       });
 
