@@ -112,8 +112,9 @@ export default function DriverDocumentsPage() {
       } else if (name === "CAMERA_API_UNAVAILABLE") {
         setCameraError("Camera access is unavailable. Open this page directly at its HTTPS address and allow camera access in your browser settings.");
       } else if (stage === "face-detection") {
-        const detail = error instanceof Error && error.message ? error.message.slice(0, 180) : "No additional error details";
-        setCameraError(`Face detection could not initialize: ${detail}. This may be caused by a blocked CDN/model download or browser network policy. Refresh and try again; if it repeats, send this full message.`);
+        console.error("[RideMitra] Face detector initialization failed:", error);
+        const detail = error instanceof Error ? `${error.name}: ${error.message || String(error)}` : String(error ?? "Unknown MediaPipe initialization error");
+        setCameraError(`Face detection could not initialize: ${detail.slice(0, 300)}. Open browser DevTools (F12) → Console for details. This may be caused by a blocked CDN/model download or browser network policy.`);
       } else {
         setCameraError("Camera could not start. Check site camera permission, make sure no other app is using the camera, and try again.");
       }
