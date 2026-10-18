@@ -62,8 +62,8 @@ export default function DriverDocumentsPage() {
         minDetectionConfidence: 0.6,
       };
       const modelUrls = [
-        "https://raw.githubusercontent.com/noname0310/mediapipe-annotation-gen/master/blaze_face_short_range.tflite",
         "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
+        "https://cdn.jsdelivr.net/gh/google-ai-edge/mediapipe@master/mediapipe/tasks/testdata/vision/blaze_face_short_range.tflite",
       ];
       let lastModelError: unknown;
       for (const modelAssetPath of modelUrls) {
@@ -112,7 +112,8 @@ export default function DriverDocumentsPage() {
       } else if (name === "CAMERA_API_UNAVAILABLE") {
         setCameraError("Camera access is unavailable. Open this page directly at its HTTPS address and allow camera access in your browser settings.");
       } else if (stage === "face-detection") {
-        setCameraError("The face-detection model could not load. Check your internet connection or network restrictions, then refresh and try again.");
+        const detail = error instanceof Error && error.message ? error.message.slice(0, 180) : "No additional error details";
+        setCameraError(`Face detection could not initialize: ${detail}. This may be caused by a blocked CDN/model download or browser network policy. Refresh and try again; if it repeats, send this full message.`);
       } else {
         setCameraError("Camera could not start. Check site camera permission, make sure no other app is using the camera, and try again.");
       }
