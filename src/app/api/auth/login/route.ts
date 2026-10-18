@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSql } from "@/lib/db";
+import { ensureSchema, getSql } from "@/lib/db";
 import { createSession, verifyPassword } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const password = typeof body.password === "string" ? body.password : "";
     if (!email || !password) return NextResponse.json({ error: "Enter your email and password." }, { status: 400 });
+    await ensureSchema();
     const sql = getSql();
     const rows = await sql`select id, email, full_name, password_hash, email_verified_at from public.users where email = ${email} limit 1`;
     if (!rows[0] || !(await verifyPassword(password, rows[0].password_hash))) return NextResponse.json({ error: "Email or password is incorrect." }, { status: 401 });
