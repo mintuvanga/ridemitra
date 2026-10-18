@@ -43,17 +43,6 @@ export default function DriverDocumentsPage() {
     let stage: "face-detection" | "camera" = "face-detection";
     try {
       setFaceStatus("Loading automatic face detection…");
-      let vision;
-      try {
-        vision = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
-        );
-      } catch {
-        vision = await FilesetResolver.forVisionTasks(
-          "https://unpkg.com/@mediapipe/tasks-vision@0.10.22/wasm"
-        );
-      }
-
       const detectorOptions = {
         baseOptions: {
           delegate: "CPU" as const,
@@ -61,24 +50,38 @@ export default function DriverDocumentsPage() {
         runningMode: "VIDEO" as const,
         minDetectionConfidence: 0.6,
       };
+      // 0.10.22 is not a published stable CDN version; pin to the published 0.10.21 package.
+      // Try both CDN hosts through detector creation, because the resolver itself may not fetch the WASM files.
+      const wasmPaths = [
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm",
+        "https://unpkg.com/@mediapipe/tasks-vision@0.10.21/wasm",
+      ];
       const modelUrls = [
         "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
         "https://cdn.jsdelivr.net/gh/google-ai-edge/mediapipe@master/mediapipe/tasks/testdata/vision/blaze_face_short_range.tflite",
       ];
-      let lastModelError: unknown;
-      for (const modelAssetPath of modelUrls) {
+      let lastDetectorError: unknown;
+      for (const wasmPath of wasmPaths) {
         try {
-          detectorRef.current = await FaceDetector.createFromOptions(vision, {
-            ...detectorOptions,
-            baseOptions: { ...detectorOptions.baseOptions, modelAssetPath },
-          });
-          break;
+          const vision = await FilesetResolver.forVisionTasks(wasmPath);
+          for (const modelAssetPath of modelUrls) {
+            try {
+              detectorRef.current = await FaceDetector.createFromOptions(vision, {
+                ...detectorOptions,
+                baseOptions: { ...detectorOptions.baseOptions, modelAssetPath },
+              });
+              break;
+            } catch (error) {
+              lastDetectorError = error;
+            }
+          }
+          if (detectorRef.current) break;
         } catch (error) {
-          lastModelError = error;
+          lastDetectorError = error;
         }
       }
       if (!detectorRef.current) {
-        throw lastModelError ?? new Error("FACE_MODEL_LOAD_FAILED");
+        throw lastDetectorError ?? new Error("FACE_MODEL_AND_WASM_LOAD_FAILED");
       }
       stage = "camera";
       if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
