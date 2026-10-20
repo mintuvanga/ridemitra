@@ -28,6 +28,7 @@ export async function GET() {
       join public.profiles p on p.id = r.passenger_id
       where dp.is_online = true and dp.updated_at > now() - interval '2 minutes'
         and r.status = 'requested' and r.vehicle_type = dp.vehicle_type and r.passenger_id <> ${user.id}
+        and not exists (select 1 from public.instant_ride_rejections rr where rr.ride_id = r.id and rr.driver_id = ${user.id})
         and (6371 * 2 * asin(sqrt(least(1, power(sin(radians(dp.latitude - r.pickup_latitude) / 2), 2)
           + cos(radians(r.pickup_latitude)) * cos(radians(dp.latitude))
           * power(sin(radians(dp.longitude - r.pickup_longitude) / 2), 2))))) <= 15
