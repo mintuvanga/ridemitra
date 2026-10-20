@@ -1,8 +1,5 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 import { FormEvent, useState } from "react";
 import styles from "./login.module.css";
 
