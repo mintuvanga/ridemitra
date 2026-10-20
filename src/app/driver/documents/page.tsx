@@ -241,21 +241,15 @@ export default function DriverDocumentsPage() {
       setMessage("Please select all four required documents before continuing.");
       return;
     }
-    // This endpoint currently receives file metadata only. Secure file storage and real identity/liveness verification must be configured before accepting documents.
     setBusy(true);
     try {
-      const response = await fetch("/api/driver/documents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          documents: requiredDocs.map(doc => ({
-            type: doc.key,
-            fileName: files[doc.key]?.name ?? "",
-            fileSize: files[doc.key]?.size ?? 0,
-            mimeType: files[doc.key]?.type ?? "",
-          })),
-        }),
-      });
+      const formData = new FormData();
+      for (const doc of requiredDocs) {
+        const file = files[doc.key];
+        if (!file) throw new Error("Please select all four required files.");
+        formData.append(doc.key, file, file.name);
+      }
+      const response = await fetch("/api/driver/documents", { method: "POST", body: formData });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Secure document submission is not ready yet.");
       setMessage(result.message || "Your documents were received for review.");
@@ -286,7 +280,7 @@ export default function DriverDocumentsPage() {
             <div className="rounded-2xl border-2 border-sky-500 bg-sky-50 p-3"><div className="flex items-center gap-2 text-sm font-extrabold text-sky-800"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-600 text-white">1</span> Selfie check</div><p className="mt-2 text-xs text-slate-600">Center your face and capture a clear photo</p></div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3"><div className="flex items-center gap-2 text-sm font-extrabold text-slate-700"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-300 text-white">2</span> Documents</div><p className="mt-2 text-xs text-slate-600">Licence, RC and insurance details</p></div>
           </div>
-          <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900"><strong>Important:</strong> Selecting files here does not upload or verify them. Secure file storage and a real identity-verification provider must be connected before submissions can be accepted. We will not mark documents as verified without those checks.</div>
+          <div className="mt-5 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-950"><strong>Private submission:</strong> Files are uploaded to restricted Cloudflare R2 storage and queued for manual administrator review. Each file must be 10 MB or smaller; total upload limit is 25 MB. Face-position checks do not prove identity or liveness. Your account remains unapproved until review is complete.</div>
           <form onSubmit={submit} className="mt-6 space-y-4">
             {requiredDocs.map((doc, index) => (
               <div key={doc.key} className="block rounded-2xl border border-slate-200 p-4 transition hover:border-sky-300">
@@ -332,7 +326,7 @@ export default function DriverDocumentsPage() {
             )}
             <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
             <div className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">{selectedCount} of 4 required files selected</div>
-            <button disabled={busy} type="submit" className="w-full rounded-xl bg-sky-600 px-4 py-3.5 font-bold text-white shadow-lg shadow-sky-200 transition hover:bg-sky-700 disabled:opacity-60">{busy ? "Checking setup…" : "Submit documents for verification"}</button>
+            <button disabled={busy} type="submit" className="w-full rounded-xl bg-sky-600 px-4 py-3.5 font-bold text-white shadow-lg shadow-sky-200 transition hover:bg-sky-700 disabled:opacity-60">{busy ? "Uploading securely…" : "Submit documents for verification"}</button>
             {message && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">{message}</p>}
           </form>
           <p className="mt-5 text-xs leading-5 text-slate-500">Your identity documents are sensitive personal information. We will only accept them once secure storage, restricted access, retention rules, and verification checks are in place.</p>

@@ -1,0 +1,8 @@
+import {NextRequest,NextResponse} from "next/server";
+import {requireAdmin} from "@/lib/admin";
+import {ensureSchema,getSql} from "@/lib/db";
+import {getR2Object} from "@/lib/r2";
+export const runtime="nodejs";export const dynamic="force-dynamic";
+export async function GET(_request:NextRequest,context:{params:Promise<{documentId:string}>}){
+ try{await requireAdmin();await ensureSchema();const {documentId}=await context.params;const sql=getSql();const rows=await sql`select object_key,original_name,content_type from public.driver_documents where id=${documentId} limit 1`;if(!rows[0])return NextResponse.json({error:"Document not found."},{status:404});const stored=await getR2Object(rows[0].object_key);const filename=String(rows[0].original_name).replace(/["\\\r\n]/g,"_");return new NextResponse(stored.body,{status:200,headers:{"Content-Type":rows[0].content_type,"Content-Disposition":'inline; filename="'+filename+'"',"Cache-Control":"private, no-store, max-age=0","X-Content-Type-Options":"nosniff","Content-Security-Policy":"default-src 'none'; sandbox"}});}catch(e){const m=e instanceof Error?e.message:"";const map:Record<string,[number,string]>={AUTH_REQUIRED:[401,"Sign in to the administrator account."],ADMIN_NOT_CONFIGURED:[503,"Admin access is not configured."],ADMIN_FORBIDDEN:[403,"Administrator access required."],R2_NOT_CONFIGURED:[503,"Private document storage is not configured."],R2_REQUEST_FAILED:[502,"Unable to open this private document."]};if(map[m])return NextResponse.json({error:map[m][1]},{status:map[m][0]});console.error("[RideMitra] document view error",e);return NextResponse.json({error:"Unable to open this private document."},{status:500});}
+}

@@ -57,6 +57,10 @@ export async function PATCH(request: NextRequest) {
     if (!id || !["accept", "reject", "arriving", "start", "complete"].includes(action)) return NextResponse.json({ error: "Invalid ride action." }, { status: 400 });
     await ensureSchema();
     const sql = getSql();
+    if (action === "accept") {
+      const verification = await sql`select status from public.driver_verifications where user_id = ${user.id} limit 1`;
+      if (verification[0]?.status !== "approved") return NextResponse.json({ error: "Driver verification must be approved before accepting rides." }, { status: 403 });
+    }
     const updated = await sql.begin(async (tx) => {
       const rows = await tx`
         select r.*, dp.is_online, dp.vehicle_type as driver_vehicle, dp.latitude as driver_latitude, dp.longitude as driver_longitude, dp.updated_at as location_updated

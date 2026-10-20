@@ -33,6 +33,10 @@ export async function POST(request: NextRequest) {
     if (online && (!Number.isFinite(lat) || !Number.isFinite(lng) || lat! < -90 || lat! > 90 || lng! < -180 || lng! > 180)) return NextResponse.json({ error: "Location permission is required to go online." }, { status: 400 });
     await ensureSchema();
     const sql = getSql();
+    if (online) {
+      const verification = await sql`select status from public.driver_verifications where user_id = ${user.id} limit 1`;
+      if (verification[0]?.status !== "approved") return NextResponse.json({ error: "Driver verification must be approved before going online." }, { status: 403 });
+    }
     const rows = await sql`
       insert into public.driver_presence (driver_id, is_online, vehicle_type, latitude, longitude, updated_at)
       values (${user.id}, ${online}, ${vehicle}, ${online ? lat : null}, ${online ? lng : null}, now())

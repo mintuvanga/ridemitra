@@ -40,6 +40,8 @@ export async function POST(request: NextRequest) {
     if (!Number.isInteger(seats) || seats < 1 || seats > 8) return NextResponse.json({ error: "Seats must be between 1 and 8." }, { status: 400 });
     if (!Number.isFinite(price) || price < 0 || price > 100000) return NextResponse.json({ error: "Enter a valid price." }, { status: 400 });
     const sql = getSql();
+    const verification = await sql`select status from public.driver_verifications where user_id = ${user.id} limit 1`;
+    if (verification[0]?.status !== "approved") return NextResponse.json({ error: "Driver verification must be approved before publishing a journey." }, { status: 403 });
     const rows = await sql`insert into public.trips (driver_id, origin_city, destination_city, departure_at, vehicle_type, seats_total, seats_available, price_per_seat, notes, status)
       values (${user.id}, ${origin}, ${destination}, ${departure.toISOString()}, ${vehicle}, ${seats}, ${seats}, ${price}, ${notes || null}, 'open')
       returning id`;
