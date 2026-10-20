@@ -27,7 +27,7 @@ export async function GET() {
       join public.driver_presence dp on dp.driver_id = ${user.id}
       join public.profiles p on p.id = r.passenger_id
       where dp.is_online = true and dp.updated_at > now() - interval '2 minutes'
-        and r.status = 'requested' and r.vehicle_type = dp.vehicle_type
+        and r.status = 'requested' and r.vehicle_type = dp.vehicle_type and r.passenger_id <> ${user.id}
         and (6371 * 2 * asin(sqrt(least(1, power(sin(radians(dp.latitude - r.pickup_latitude) / 2), 2)
           + cos(radians(r.pickup_latitude)) * cos(radians(dp.latitude))
           * power(sin(radians(dp.longitude - r.pickup_longitude) / 2), 2))))) <= 15
@@ -64,7 +64,7 @@ export async function PATCH(request: NextRequest) {
         where r.id = ${id} for update of r
       `;
       const ride = rows[0];
-      if (!ride) throw new Error("RIDE_NOT_FOUND");
+      if (!ride || ride.passenger_id === user.id) throw new Error("RIDE_NOT_FOUND");
       if (action === "accept" || action === "reject") {
         if (ride.status !== "requested") throw new Error("RIDE_NOT_AVAILABLE");
         if (!ride.is_online || ride.location_updated < new Date(Date.now() - 120000)) throw new Error("DRIVER_OFFLINE");
