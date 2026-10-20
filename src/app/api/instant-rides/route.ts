@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     if (!Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lng) || lng < -180 || lng > 180) return NextResponse.json({ error: "Allow location access so we can find nearby drivers." }, { status: 400 });
     if ((destLat !== null && (!Number.isFinite(destLat) || destLat < -90 || destLat > 90)) || (destLng !== null && (!Number.isFinite(destLng) || destLng < -180 || destLng > 180))) return NextResponse.json({ error: "Destination coordinates are invalid." }, { status: 400 });
     if ((destLat === null) !== (destLng === null)) return NextResponse.json({ error: "Provide both destination coordinates or neither." }, { status: 400 });
-    const distance = destLat === null ? 5 : distanceKm(lat, lng, destLat, destLng);
+    const distance = destLat === null || destLng === null ? 5 : distanceKm(lat, lng, destLat, destLng);
     const baseFare = vehicle === "motorcycle" ? 25 : vehicle === "auto" ? 40 : 70;
     const perKm = vehicle === "motorcycle" ? 8 : vehicle === "auto" ? 13 : 18;
     const fare = Math.round((baseFare + distance * perKm) * 100) / 100;
