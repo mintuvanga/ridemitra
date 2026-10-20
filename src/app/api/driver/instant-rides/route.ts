@@ -76,7 +76,7 @@ export async function PATCH(request: NextRequest) {
         const distance = distanceKm(Number(ride.driver_latitude), Number(ride.driver_longitude), Number(ride.pickup_latitude), Number(ride.pickup_longitude));
         if (distance > 15) throw new Error("TOO_FAR");
         if (action === "reject") {
-          await tx`update public.instant_rides set status = 'rejected', driver_id = ${user.id}, updated_at = now() where id = ${id}`;
+          await tx`insert into public.instant_ride_rejections (ride_id, driver_id) values (${id}, ${user.id}) on conflict (ride_id, driver_id) do nothing`;
         } else {
           const taken = await tx`update public.instant_rides set status = 'accepted', driver_id = ${user.id}, updated_at = now() where id = ${id} and status = 'requested' returning id`;
           if (!taken[0]) throw new Error("RIDE_NOT_AVAILABLE");
