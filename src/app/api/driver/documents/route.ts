@@ -44,7 +44,7 @@ export async function POST(request:NextRequest){
    const existing=await tx`select status from public.driver_verifications where user_id=${user.id} for update`;
    if(existing[0]?.status==="approved")throw new Error("ALREADY_APPROVED");
    if(existing[0]?.status==="pending")throw new Error("SUBMISSION_PENDING");
-   const previous=await tx`select object_key from public.driver_documents where user_id=${user.id}`;old.push(...previous.map((r:{object_key:string})=>r.object_key));
+   const previous=await tx`select object_key from public.driver_documents where user_id=${user.id}`;old.push(...previous.map(r=>(r as {object_key:string}).object_key));
    await tx`insert into public.driver_verifications(user_id,status,rejection_reason,reviewed_by,reviewed_at,submitted_at,updated_at) values(${user.id},'pending',null,null,null,now(),now()) on conflict(user_id) do update set status='pending',rejection_reason=null,reviewed_by=null,reviewed_at=null,submitted_at=now(),updated_at=now()`;
    for(const f of saved)await tx`insert into public.driver_documents(user_id,document_type,object_key,original_name,content_type,size_bytes,status) values(${user.id},${f.type},${f.key},${f.name},${f.mime},${f.size},'pending') on conflict(user_id,document_type) do update set object_key=excluded.object_key,original_name=excluded.original_name,content_type=excluded.content_type,size_bytes=excluded.size_bytes,status='pending',created_at=now()`;
   });
