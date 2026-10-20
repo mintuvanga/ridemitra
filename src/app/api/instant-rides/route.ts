@@ -73,3 +73,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: status === 503 ? "Database is not configured." : "Unable to request a ride." }, { status });
   }
 }
+
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Sign in to update your ride." }, { status: 401 });
+    const body = await request.json();
+    const id = typeof body.ride_id === "string" ? body.ride_id : "";
+    if (!id || body.action !== "cancel") return NextResponse.json({ error: "Invalid ride action." }, { status: 400 });
+    await ensureSchema();
+    const sql = getSql();
+    const rows = await sql`
+      update public.instant_rides set status = 'cancelled', updated_at = now()
+      where id = ${id} and passenger_id = ${user.id} and status = 'requested'
+      returning id, status, updated_at
+    `;
+    if (!rows[0]) return NextResponse.json({ error: "Ride not found or it can no longer be cancelled." }, { status: 409 });
+    return NextResponse.json({ ride: rows[0] });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    const status = message.includes("DATABASE_URL") || message.includes("Database is not configured") ? 503 : 500;
+    return NextResponse.json({ error: status === 503 ? "Database is not configured." : "Unable to cancel ride." }, { status });
+  }
+}
