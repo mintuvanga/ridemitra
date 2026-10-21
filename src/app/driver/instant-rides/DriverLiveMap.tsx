@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { Map as LeafletMap, Marker } from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "./DriverLiveMap.css";
 
 type Props = {
   location: { lat: number; lon: number } | null;
