@@ -23,6 +23,7 @@ export default function DriverInstantRidesPage() {
   const [sheet, setSheet] = useState<"requests" | "active" | null>(null);
   const [switching, setSwitching] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [earnings, setEarnings] = useState<{ total_estimated_fare: number; this_week_estimated_fare: number; completed_rides: number } | null>(null);
   const watchId = useRef<number | null>(null);
   const onlineRef = useRef(false);
 
@@ -51,6 +52,20 @@ export default function DriverInstantRidesPage() {
   }, []);
 
   useEffect(() => { void load(); const timer = window.setInterval(() => void load(), 5000); return () => window.clearInterval(timer); }, [load]);
+
+  useEffect(() => {
+    let alive = true;
+    const refreshEarnings = async () => {
+      try {
+        const response = await fetch("/api/driver/earnings", { cache: "no-store" });
+        const result = await response.json();
+        if (alive && response.ok && result.summary) setEarnings(result.summary);
+      } catch { /* Earnings remain unavailable until the API responds. */ }
+    };
+    void refreshEarnings();
+    const timer = window.setInterval(() => void refreshEarnings(), 30000);
+    return () => { alive = false; window.clearInterval(timer); };
+  }, []);
 
   const stopWatching = useCallback(() => {
     if (watchId.current !== null && typeof navigator !== "undefined" && navigator.geolocation) navigator.geolocation.clearWatch(watchId.current);
@@ -159,14 +174,14 @@ export default function DriverInstantRidesPage() {
       {[["My rides","/driver/rides"],["Earnings","/driver/earnings"],["Ride activity","/driver/notifications"],["Vehicle & documents","/driver/onboarding"],["My profile","/driver/profile"],["Help & support","/support"]].map(([label,href]) => <Link key={href} href={href} onClick={() => setMenuOpen(false)} className="block border-b border-slate-100 px-4 py-3 text-sm font-bold text-slate-700 last:border-0 hover:bg-sky-50">{label}<span className="float-right text-slate-400">›</span></Link>)}
     </nav>}
 
-    <div className="absolute bottom-2 left-2 right-2 z-[600] pb-[env(safe-area-inset-bottom)] sm:bottom-5 sm:left-5 sm:right-5">
+    <div className="absolute bottom-[76px] left-2 right-2 z-[600] pb-1 sm:bottom-5 sm:left-5 sm:right-5">
       {sheet && <section className="mb-2 max-h-[42dvh] overflow-y-auto rounded-3xl border border-white/80 bg-white/95 p-3 shadow-2xl backdrop-blur-xl sm:mb-3 sm:max-h-[48dvh] sm:p-4 sm:ml-auto sm:max-w-xl">
         <div className="mb-2 flex items-center justify-between sm:mb-3"><div><h2 className="text-lg font-black">{sheet === "requests" ? "Nearby ride requests" : "Your active rides"}</h2><p className="text-xs text-slate-500">{sheet === "requests" ? requests.length + " available" : active.length + " in progress"}</p></div><button onClick={() => setSheet(null)} className="rounded-full bg-slate-100 px-3 py-2 font-bold" aria-label="Close ride panel">✕</button></div>
         {sheet === "requests" && (!presence.is_online ? <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Go online to receive matching ride requests.</p> : requests.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">{loading ? "Loading requests…" : "No matching requests yet. New requests refresh automatically."}</p> : <div className="space-y-3">{requests.map(ride => <article key={ride.id} className="rounded-2xl border border-slate-200 p-3"><div className="flex justify-between gap-3"><div><p className="text-xs font-bold text-sky-700">{Number(ride.pickup_distance_km || 0).toFixed(1)} km away · {currentVehicle}</p><h3 className="font-extrabold">{ride.passenger_name}</h3></div><b className="text-lg text-sky-700">₹{Number(ride.estimated_fare).toFixed(0)}</b></div><p className="mt-2 text-sm"><span className="font-bold">Pickup:</span> {ride.pickup}</p><p className="mt-1 text-sm"><span className="font-bold">Drop:</span> {ride.destination}</p><div className="mt-2 grid grid-cols-2 gap-2 sm:mt-3"><button disabled={busy === ride.id} onClick={() => void act(ride, "reject")} className="rounded-xl border border-rose-200 py-3 text-sm font-bold text-rose-700">Decline</button><button disabled={busy === ride.id} onClick={() => void act(ride, "accept")} className="rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white">{busy === ride.id ? "Please wait…" : "Accept ride"}</button></div></article>)}</div>)}
         {sheet === "active" && (active.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">Accepted rides will appear here.</p> : <div className="space-y-3">{active.map(ride => <article key={ride.id} className="rounded-2xl border border-slate-200 p-3"><div className="flex justify-between gap-2"><b>{ride.passenger_name}</b><span className="rounded-full bg-sky-100 px-2 py-1 text-xs font-bold">{statusNames[ride.status] || ride.status}</span></div><p className="mt-2 text-sm">Pickup: {ride.pickup}</p><p className="mt-1 text-sm">Drop: {ride.destination}</p><div className="mt-3 flex flex-wrap gap-2">{ride.status === "accepted" && <button onClick={() => void act(ride, "arriving")} className="rounded-xl bg-sky-600 px-3 py-2 text-sm font-bold text-white">I'm arriving</button>}{ride.status === "arriving" && <button onClick={() => void act(ride, "start")} className="rounded-xl bg-sky-600 px-3 py-2 text-sm font-bold text-white">Start ride</button>}{ride.status === "in_progress" && <button onClick={() => void act(ride, "complete")} className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white">Complete ride</button>}<Link href={"/ride/track?ride=" + encodeURIComponent(ride.id)} className="rounded-xl border px-3 py-2 text-sm font-bold">Passenger tracking</Link></div></article>)}</div>)}
       </section>}
 
-      <section className="max-h-[min(54dvh,440px)] overflow-y-auto overscroll-contain rounded-[24px] border border-white/90 bg-white/95 shadow-2xl backdrop-blur-xl sm:max-h-none sm:overflow-hidden sm:rounded-[28px] sm:ml-auto sm:max-w-md">
+      <section className="max-h-[min(48dvh,390px)] overflow-y-auto overscroll-contain rounded-[24px] border border-white/90 bg-white/95 shadow-[0_18px_55px_rgba(15,23,42,.20)] backdrop-blur-xl sm:max-h-none sm:overflow-hidden sm:rounded-[28px] sm:ml-auto sm:max-w-md">
         <div className="px-3 pb-3 pt-3 sm:px-5 sm:pb-3 sm:pt-4">
           <div className="mb-3 flex items-center justify-between">
             <div><p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">Driver mode</p><h1 className="mt-1 text-lg font-black tracking-tight sm:text-xl">{presence.is_online ? "You're ready for rides" : "Ready when you are"}</h1></div>
@@ -179,11 +194,32 @@ export default function DriverInstantRidesPage() {
             <button onClick={() => setSheet(sheet === "requests" ? null : "requests")} className={"rounded-2xl border px-3 py-3 text-left transition " + (sheet === "requests" ? "border-sky-600 bg-sky-50" : "border-slate-200 bg-white hover:bg-slate-50")}><span className="flex items-center justify-between text-sm font-extrabold">Ride requests <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">{requests.length}</span></span><span className="mt-1 block text-xs text-slate-500">Nearby bookings</span></button>
             <button onClick={() => setSheet(sheet === "active" ? null : "active")} className={"rounded-2xl border px-3 py-3 text-left transition " + (sheet === "active" ? "border-sky-600 bg-sky-50" : "border-slate-200 bg-white hover:bg-slate-50")}><span className="flex items-center justify-between text-sm font-extrabold">Active rides <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">{active.length}</span></span><span className="mt-1 block text-xs text-slate-500">Manage current trips</span></button>
           </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <Link href="/driver/earnings" className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 transition hover:bg-sky-50">
+              <span className="flex items-center justify-between text-[11px] font-bold text-slate-500"><span>RIDE EARNINGS</span><span className="text-sky-700">↗</span></span>
+              <span className="mt-1 block text-lg font-black text-slate-900">{earnings ? "₹" + Math.round(earnings.total_estimated_fare).toLocaleString("en-IN") : "—"}</span>
+              <span className="mt-0.5 block text-[10px] text-slate-500">{earnings ? earnings.completed_rides + " completed rides · estimates" : "Tap to view summary"}</span>
+            </Link>
+            <Link href="/driver/rides" className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 transition hover:bg-sky-50">
+              <span className="flex items-center justify-between text-[11px] font-bold text-slate-500"><span>MY RIDES</span><span className="text-sky-700">↗</span></span>
+              <span className="mt-1 block text-lg font-black text-slate-900">{active.length} active</span>
+              <span className="mt-0.5 block text-[10px] text-slate-500">Bookings & ride history</span>
+            </Link>
+          </div>
           {(message || (presence.is_online && locationStatus && !location)) && <p role="status" className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">{message || locationStatus}</p>}
           <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3"><div><p className="text-xs font-bold text-slate-700">{currentVehicle} selected</p><p className="mt-0.5 text-[10px] text-slate-500">GPS {location ? "location available" : "not acquired yet"} · {loading ? "Syncing…" : "Auto-refresh enabled"}</p></div><Link href="/driver/onboarding" className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50">Vehicle settings ›</Link></div>
           <p className="mt-2 text-[10px] leading-4 text-slate-400">Keep this page open to share GPS while online. Fare amounts are estimates; live payments are not connected.</p>
         </div>
       </section>
     </div>
+
+    <nav aria-label="Driver app navigation" className="fixed inset-x-0 bottom-0 z-[800] border-t border-slate-200 bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_-8px_28px_rgba(15,23,42,.10)] backdrop-blur-xl">
+      <div className="mx-auto grid max-w-xl grid-cols-4 gap-1">
+        <Link href="/driver/instant-rides" aria-current="page" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl bg-sky-50 px-1 text-sky-700"><span className="text-xl leading-5">⌂</span><span className="text-[10px] font-extrabold">Home</span></Link>
+        <Link href="/driver/earnings" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-500 transition hover:bg-slate-50 hover:text-sky-700"><span className="text-xl leading-5">₹</span><span className="text-[10px] font-bold">Earnings</span></Link>
+        <Link href="/driver/rides" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-500 transition hover:bg-slate-50 hover:text-sky-700"><span className="text-xl leading-5">▤</span><span className="text-[10px] font-bold">My rides</span></Link>
+        <Link href="/driver/profile" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-500 transition hover:bg-slate-50 hover:text-sky-700"><span className="text-xl leading-5">●</span><span className="text-[10px] font-bold">Profile</span></Link>
+      </div>
+    </nav>
   </main>;
 }
