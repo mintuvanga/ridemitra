@@ -83,6 +83,7 @@ export default function DriverHomePage() {
         <header className="flex items-center justify-between gap-4 rounded-2xl border border-sky-100 bg-white px-4 py-3 shadow-sm sm:px-6">
           <Link href="/" className="text-xl font-black tracking-tight">Ride<span className="text-sky-600">Mitra</span><span className="ml-2 text-sm font-semibold text-slate-500">Driver</span></Link>
           <div className="flex flex-wrap items-center gap-2">
+            <Link href="/driver/onboarding" className="rounded-xl border border-sky-200 px-3 py-2 text-sm font-bold text-sky-700 transition hover:bg-sky-50">Vehicle details</Link>
             <Link href="/driver/rides" className="rounded-xl bg-sky-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-sky-700">My rides →</Link>
             <Link href="/driver/trips" className="rounded-xl border border-sky-200 px-3 py-2 text-sm font-bold text-sky-700 transition hover:bg-sky-50">My journeys</Link>
             <Link href="/driver/profile" className="rounded-xl border border-sky-200 px-3 py-2 text-sm font-bold text-sky-700 transition hover:bg-sky-50">My profile</Link>
@@ -135,7 +136,10 @@ export default function DriverHomePage() {
                 {status === "approved" ? (
                   <Link href="/driver/instant-rides" className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 text-sm font-extrabold text-white shadow-lg transition hover:bg-emerald-700">Open driver mode <span aria-hidden="true">→</span></Link>
                 ) : (
-                  <Link href="/driver/documents" className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-5 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-sky-100 transition hover:bg-sky-700">{status === "pending" ? "View document submission" : status === "rejected" ? "Correct and resubmit documents" : "Continue document check"} <span aria-hidden="true">→</span></Link>
+                  <>
+                    <Link href="/driver/onboarding" className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-sky-200 bg-white px-5 py-3.5 text-sm font-extrabold text-sky-700 transition hover:bg-sky-50">Add vehicle registration details <span aria-hidden="true">→</span></Link>
+                    <Link href="/driver/documents" className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-5 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-sky-100 transition hover:bg-sky-700">{status === "pending" ? "View document submission" : status === "rejected" ? "Correct and resubmit documents" : "Continue document check"} <span aria-hidden="true">→</span></Link>
+                  </>
                 )}
               </div>
 
