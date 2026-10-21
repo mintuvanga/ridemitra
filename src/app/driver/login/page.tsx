@@ -72,7 +72,7 @@ export default function DriverLoginPage() {
           <button style={{ ...styles.button, opacity: loading ? 0.7 : 1 }} type="submit" disabled={loading}>{loading ? "Signing in…" : "Sign in securely  →"}</button>
         </form>
         <div style={styles.note}><span aria-hidden="true">🔒</span><span>Your account and driver documents are protected. Never share your password or verification codes.</span></div>
-        <p style={styles.footer}>New driver? Contact RideMitra support to get started.<br /><Link href="/login" style={{ color: "#6ee7b7", fontWeight: 800 }}>Rider / customer sign in</Link></p>
+        <p style={styles.footer}>New driver? Contact RideMitra support to get started.</p>
       </section>
     </main>
   );
