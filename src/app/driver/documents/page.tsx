@@ -265,41 +265,41 @@ export default function DriverDocumentsPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-blue-50 px-4 py-6 text-slate-900 sm:px-6">
+    <main className="min-h-screen bg-[#071827] px-3 pb-28 pt-4 text-slate-100 sm:px-6 sm:py-8">
       <div className="mx-auto max-w-2xl">
-        <header className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-sky-100 bg-white px-4 py-3 shadow-sm">
-          <Link href="/" className="text-lg font-black tracking-tight">Ride<span className="text-sky-600">Mitra</span> <span className="text-sm font-medium text-slate-500">Driver</span></Link>
-          <Link href="/support" className="rounded-xl border border-sky-200 px-3 py-2 text-sm font-bold text-sky-700 hover:bg-sky-50">Contact Support ↗</Link>
+        <header className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-slate-700 bg-[#0b2234] px-4 py-3 shadow-sm">
+          <Link href="/" className="text-lg font-black tracking-tight">Ride<span className="text-emerald-300">Mitra</span> <span className="text-sm font-medium text-slate-400">Driver</span></Link>
+          <Link href="/support" className="rounded-xl border border-slate-600 px-3 py-2 text-sm font-bold text-emerald-300 hover:bg-emerald-950/40">Contact Support ↗</Link>
         </header>
-        <section className="rounded-3xl border border-sky-100 bg-white p-5 shadow-xl shadow-sky-100/60 sm:p-8">
-          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-100 text-2xl">🛡️</div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-700">Driver onboarding · Step 1 of 2</p>
+        <section className="rounded-3xl border border-slate-700 bg-[#0b2234] p-5 shadow-xl shadow-black/20 sm:p-8">
+          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-950/50 text-2xl">🛡️</div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-300">Driver onboarding · Step 1 of 2</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight">Driver identity check</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600">Start with a guided selfie, then add your driving licence and vehicle documents. Your profile remains pending until the required checks are completed.</p>
+          <p className="mt-3 text-sm leading-6 text-slate-300">Start with a guided selfie, then add your driving licence and vehicle documents. Your profile remains pending until the required checks are completed.</p>
           <div className="mt-5 grid grid-cols-2 gap-3" aria-label="Verification progress">
-            <div className="rounded-2xl border-2 border-sky-500 bg-sky-50 p-3"><div className="flex items-center gap-2 text-sm font-extrabold text-sky-800"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-600 text-white">1</span> Selfie check</div><p className="mt-2 text-xs text-slate-600">Center your face and capture a clear photo</p></div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3"><div className="flex items-center gap-2 text-sm font-extrabold text-slate-700"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-300 text-white">2</span> Documents</div><p className="mt-2 text-xs text-slate-600">Licence, RC and insurance details</p></div>
+            <div className="rounded-2xl border-2 border-emerald-400 bg-emerald-950/40 p-3"><div className="flex items-center gap-2 text-sm font-extrabold text-emerald-200"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white">1</span> Selfie check</div><p className="mt-2 text-xs text-slate-300">Center your face and capture a clear photo</p></div>
+            <div className="rounded-2xl border border-slate-700 bg-slate-800/70 p-3"><div className="flex items-center gap-2 text-sm font-extrabold text-slate-200"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-600 text-white">2</span> Documents</div><p className="mt-2 text-xs text-slate-300">Licence, RC and insurance details</p></div>
           </div>
-          <div className="mt-5 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-950"><strong>Private submission:</strong> Files are uploaded to restricted Cloudflare R2 storage and queued for manual administrator review. Each file must be 10 MB or smaller; total upload limit is 25 MB. Face-position checks do not prove identity or liveness. Your account remains unapproved until review is complete.</div>
+          <div className="mt-5 rounded-2xl border border-slate-600 bg-emerald-950/40 p-4 text-sm leading-6 text-sky-950"><strong>Private submission:</strong> Files are uploaded to restricted Cloudflare R2 storage and queued for manual administrator review. Each file must be 10 MB or smaller; total upload limit is 25 MB. Face-position checks do not prove identity or liveness. Your account remains unapproved until review is complete.</div>
           <form onSubmit={submit} className="mt-6 space-y-4">
             {requiredDocs.map((doc, index) => (
-              <div key={doc.key} className="block rounded-2xl border border-slate-200 p-4 transition hover:border-sky-300">
+              <div key={doc.key} className="block rounded-2xl border border-slate-700 p-4 transition hover:border-emerald-400">
                 <div className="flex items-start gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-50 font-bold text-sky-700">{index + 1}</span>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-950/40 font-bold text-emerald-300">{index + 1}</span>
                   <div className="min-w-0 flex-1">
                     <p className="font-bold">{doc.title} <span className="text-red-500">*</span></p>
-                    <p className="mt-1 text-sm text-slate-500">{doc.detail}</p>
+                    <p className="mt-1 text-sm text-slate-400">{doc.detail}</p>
                     {doc.key !== "selfie" ? (
                       <>
-                        <input required type="file" accept={doc.accept} onChange={event => setFiles(current => ({ ...current, [doc.key]: event.target.files?.[0] ?? null }))} className="mt-3 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-sky-100 file:px-3 file:py-2 file:font-semibold file:text-sky-800" />
-                        {files[doc.key] && <p className="mt-2 break-all text-xs text-sky-700">Selected: {files[doc.key]?.name}</p>}
+                        <input required type="file" accept={doc.accept} onChange={event => setFiles(current => ({ ...current, [doc.key]: event.target.files?.[0] ?? null }))} className="mt-3 block w-full text-sm text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-950/50 file:px-3 file:py-2 file:font-semibold file:text-emerald-200" />
+                        {files[doc.key] && <p className="mt-2 break-all text-xs text-emerald-300">Selected: {files[doc.key]?.name}</p>}
                       </>
                     ) : (
                       <div className="mt-3 space-y-3">
-                        {capturedPreview && <img src={capturedPreview} alt="Captured live selfie preview" className="h-32 w-32 rounded-2xl border border-sky-200 object-cover" />}
-                        {files.selfie && <p className="break-all text-xs text-sky-700">Captured: {files.selfie.name}</p>}
-                        <button type="button" onClick={() => { setCameraError(""); void openCamera(); }} className="w-full rounded-xl bg-sky-600 px-4 py-3 font-bold text-white transition hover:bg-sky-700">{files.selfie ? "Retake live selfie" : "Open camera and take selfie"}</button>
-                        <p className="text-xs leading-5 text-slate-500">Camera access is requested only when you tap the button. Keep one face centered, clearly lit, and close enough to fit the oval.</p>
+                        {capturedPreview && <img src={capturedPreview} alt="Captured live selfie preview" className="h-32 w-32 rounded-2xl border border-slate-600 object-cover" />}
+                        {files.selfie && <p className="break-all text-xs text-emerald-300">Captured: {files.selfie.name}</p>}
+                        <button type="button" onClick={() => { setCameraError(""); void openCamera(); }} className="w-full rounded-xl bg-emerald-500 px-4 py-3 font-bold text-white transition hover:bg-emerald-400">{files.selfie ? "Retake live selfie" : "Open camera and take selfie"}</button>
+                        <p className="text-xs leading-5 text-slate-400">Camera access is requested only when you tap the button. Keep one face centered, clearly lit, and close enough to fit the oval.</p>
                         {cameraError && <p role="alert" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{cameraError}</p>}
                       </div>
                     )}
@@ -308,7 +308,7 @@ export default function DriverDocumentsPage() {
               </div>
             ))}
             {cameraOpen && (
-              <div className="rounded-2xl border border-sky-200 bg-slate-950 p-4 text-white">
+              <div className="rounded-2xl border border-slate-600 bg-slate-950 p-4 text-white">
                 <div className="flex items-center justify-between gap-3">
                   <div><h2 className="font-bold">Driver selfie check</h2><p className="mt-1 text-xs text-slate-300">Step 1 of 2 · Position and lighting</p></div>
                   <button type="button" onClick={stopCamera} className="rounded-lg border border-white/20 px-3 py-1.5 text-sm">Close</button>
@@ -318,20 +318,30 @@ export default function DriverDocumentsPage() {
                   <div aria-hidden="true" className={`pointer-events-none absolute left-1/2 top-1/2 h-[72%] w-[62%] -translate-x-1/2 -translate-y-1/2 rounded-[48%] border-[3px] ${faceReady ? "border-emerald-400" : "border-sky-300"} shadow-[0_0_0_999px_rgba(0,0,0,0.34)] transition-colors`} />
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-12 text-center text-xs font-semibold text-white">Keep your full face inside the oval</div>
                 </div>
-                <div className={`mt-4 flex items-start gap-3 rounded-xl p-3 ${faceReady ? "bg-emerald-500/15 text-emerald-200" : "bg-white/10 text-sky-100"}`} role="status"><span className="mt-0.5 text-lg">{faceReady ? "✓" : "◎"}</span><div><p className="text-sm font-bold">{faceReady ? "Ready to capture" : "Positioning check"}</p><p className="mt-1 text-xs leading-5">{faceStatus}</p></div></div>
-                <button type="button" disabled={!faceReady} onClick={captureSelfie} className="mt-4 w-full rounded-xl bg-sky-500 px-4 py-3.5 font-bold text-white shadow-lg shadow-sky-950/30 disabled:cursor-not-allowed disabled:bg-slate-600"><span className="mr-2">●</span> Capture selfie</button>
-                <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px] text-slate-300"><div className="rounded-lg bg-white/5 p-2"><div className="mb-1 text-base">◎</div>One face</div><div className="rounded-lg bg-white/5 p-2"><div className="mb-1 text-base">☼</div>Good lighting</div><div className="rounded-lg bg-white/5 p-2"><div className="mb-1 text-base">▣</div>Centered</div></div>
+                <div className={`mt-4 flex items-start gap-3 rounded-xl p-3 ${faceReady ? "bg-emerald-500/15 text-emerald-200" : "bg-[#0b2234]/10 text-sky-100"}`} role="status"><span className="mt-0.5 text-lg">{faceReady ? "✓" : "◎"}</span><div><p className="text-sm font-bold">{faceReady ? "Ready to capture" : "Positioning check"}</p><p className="mt-1 text-xs leading-5">{faceStatus}</p></div></div>
+                <button type="button" disabled={!faceReady} onClick={captureSelfie} className="mt-4 w-full rounded-xl bg-emerald-950/400 px-4 py-3.5 font-bold text-white shadow-lg shadow-sky-950/30 disabled:cursor-not-allowed disabled:bg-slate-600"><span className="mr-2">●</span> Capture selfie</button>
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px] text-slate-300"><div className="rounded-lg bg-[#0b2234]/5 p-2"><div className="mb-1 text-base">◎</div>One face</div><div className="rounded-lg bg-[#0b2234]/5 p-2"><div className="mb-1 text-base">☼</div>Good lighting</div><div className="rounded-lg bg-[#0b2234]/5 p-2"><div className="mb-1 text-base">▣</div>Centered</div></div>
                 <p className="mt-3 text-[11px] leading-5 text-slate-400">This checks face position and lighting only. Real identity matching and liveness verification still require a secure verification provider.</p>
               </div>
             )}
             <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
-            <div className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">{selectedCount} of 4 required files selected</div>
-            <button disabled={busy} type="submit" className="w-full rounded-xl bg-sky-600 px-4 py-3.5 font-bold text-white shadow-lg shadow-sky-200 transition hover:bg-sky-700 disabled:opacity-60">{busy ? "Uploading securely…" : "Submit documents for verification"}</button>
+            <div className="rounded-xl bg-slate-800/70 p-3 text-sm text-slate-300">{selectedCount} of 4 required files selected</div>
+            <button disabled={busy} type="submit" className="w-full rounded-xl bg-emerald-500 px-4 py-3.5 font-bold text-white shadow-lg shadow-black/20 transition hover:bg-emerald-400 disabled:opacity-60">{busy ? "Uploading securely…" : "Submit documents for verification"}</button>
             {message && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">{message}</p>}
           </form>
-          <p className="mt-5 text-xs leading-5 text-slate-500">Your identity documents are sensitive personal information. We will only accept them once secure storage, restricted access, retention rules, and verification checks are in place.</p>
+          <p className="mt-5 text-xs leading-5 text-slate-400">Your identity documents are sensitive personal information. We will only accept them once secure storage, restricted access, retention rules, and verification checks are in place.</p>
         </section>
       </div>
+
+      <nav aria-label="Driver navigation" className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-700 bg-[#071827]/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur">
+        <div className="mx-auto grid max-w-xl grid-cols-4 gap-1">
+          {[{ label: "Home", icon: "⌂", href: "/driver/instant-rides" }, { label: "New rides", icon: "◉", href: "/driver/new-ride-requests" }, { label: "Earnings", icon: "₹", href: "/driver/earnings" }, { label: "More", icon: "☰", href: "/driver/instant-rides" }].map(item => (
+            <Link key={item.label} href={item.href} className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-xs font-bold text-slate-300 transition hover:bg-slate-800 hover:text-emerald-300">
+              <span className="text-lg leading-none">{item.icon}</span><span>{item.label}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
     </main>
   );
 }
