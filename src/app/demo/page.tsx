@@ -29,8 +29,8 @@ export default function DemoDriverPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-blue-50 text-slate-900">
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-        <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-100 bg-white px-5 py-4 shadow-sm">
-          <Link href="/" className="text-2xl font-black tracking-tight">Ride<span className="text-sky-600">Mitra</span></Link>
+        <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-100 bg-white px-4 py-3 shadow-sm sm:px-5 sm:py-4">
+          <div className="flex items-center gap-3"><DemoMenu /><Link href="/" className="text-2xl font-black tracking-tight">Ride<span className="text-sky-600">Mitra</span></Link></div>
           <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-extrabold text-violet-800">GUEST DEMO · NO LOGIN</span><Link href="/driver/login" className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-sky-700">Driver sign in</Link></div>
         </header>
 
