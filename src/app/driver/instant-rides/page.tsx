@@ -377,22 +377,37 @@ export default function DriverInstantRidesPage() {
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <span
-              className={
-                "hidden items-center gap-2 rounded-full border px-3 py-2 text-xs font-bold sm:flex " +
-                (presence.is_online
-                  ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-200"
-                  : "border-white/10 bg-white/5 text-slate-300")
-              }
-            >
+            <div className="flex items-center gap-2">
               <span
                 className={
-                  "h-2 w-2 rounded-full " +
-                  (presence.is_online ? "animate-pulse bg-emerald-300" : "bg-slate-500")
+                  "hidden items-center gap-2 rounded-full border px-3 py-2 text-xs font-bold sm:flex " +
+                  (presence.is_online
+                    ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-200"
+                    : "border-white/10 bg-white/5 text-slate-300")
                 }
-              />
-              {presence.is_online ? "You are online" : "You are offline"}
-            </span>
+              >
+                <span
+                  className={
+                    "h-2 w-2 rounded-full " +
+                    (presence.is_online ? "animate-pulse bg-emerald-300" : "bg-slate-500")
+                  }
+                />
+                {presence.is_online ? "You are online" : "You are offline"}
+              </span>
+              <button
+                type="button"
+                onClick={() => void toggleOnline()}
+                disabled={switching || locating}
+                className={
+                  "min-h-10 rounded-xl px-3 py-2 text-[10px] font-black tracking-wide text-[#052333] transition hover:brightness-105 disabled:cursor-wait disabled:opacity-60 sm:px-4 sm:text-xs " +
+                  (presence.is_online
+                    ? "bg-slate-100 text-slate-900"
+                    : "bg-gradient-to-r from-emerald-300 to-emerald-400")
+                }
+              >
+                {switching ? "PLEASE WAIT…" : locating ? "LOCATING…" : presence.is_online ? "GO OFFLINE" : "GO ONLINE"}
+              </button>
+            </div>
             <Link
               href="/driver/notifications"
               aria-label="Ride notifications"
@@ -438,50 +453,6 @@ export default function DriverInstantRidesPage() {
 
       <div className="relative mx-auto grid w-full max-w-[520px] gap-5 px-3 py-4 sm:px-4 sm:py-5">
         <div className="min-w-0 space-y-4 pb-24">
-          <section className="flex flex-col justify-between gap-4 rounded-3xl border border-white/10 bg-gradient-to-br from-[#0d2b40] via-[#0b2538] to-[#0b3b3a] p-5 shadow-xl shadow-black/10 sm:p-7 md:flex-row md:items-center">
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-emerald-200">
-                Driver dashboard
-              </p>
-              <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">
-                Good to see you, Captain <span aria-hidden="true">✦</span>
-              </h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
-                Your rides, earnings and driver activity—all in one place.
-              </p>
-              <p className="mt-3 flex items-center gap-2 text-xs text-slate-400">
-                <span
-                  className={
-                    "h-2 w-2 rounded-full " +
-                    (presence.is_online ? "bg-emerald-300" : "bg-slate-500")
-                  }
-                />
-                {presence.is_online
-                  ? "Your profile is available for nearby ride requests."
-                  : "You are offline. Go online when you're ready to ride."}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => void toggleOnline()}
-              disabled={switching || locating}
-              className={
-                "flex min-h-[54px] w-full shrink-0 items-center justify-center gap-3 rounded-2xl px-6 py-4 text-sm font-black tracking-wide text-[#052333] shadow-lg transition hover:brightness-105 active:scale-[0.99] disabled:cursor-wait disabled:opacity-60 md:w-[220px] " +
-                (presence.is_online
-                  ? "bg-slate-100 text-slate-900 shadow-black/10"
-                  : "bg-gradient-to-r from-emerald-300 to-emerald-400 shadow-emerald-500/15")
-              }
-            >
-              <span className="text-lg">{switching || locating ? "…" : presence.is_online ? "Ⅱ" : "▶"}</span>
-              {switching
-                ? "PLEASE WAIT…"
-                : locating
-                  ? "FINDING LOCATION…"
-                  : presence.is_online
-                    ? "GO OFFLINE"
-                    : "GO ONLINE"}
-            </button>
-          </section>
 
           {message && (
             <div
