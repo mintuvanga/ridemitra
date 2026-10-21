@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+
 
 type Tracking = {
   id: string; status: string; pickup: string; destination: string; driver_name: string | null;
@@ -10,12 +10,15 @@ type Tracking = {
 };
 
 export default function RideTrackingPage() {
-  const params = useSearchParams();
-  const rideId = params.get("ride");
+  const [rideId, setRideId] = useState<string | null>(null);
+  useEffect(() => {
+    setRideId(new URLSearchParams(window.location.search).get("ride"));
+  }, []);
   const [ride, setRide] = useState<Tracking | null>(null);
   const [error, setError] = useState("");
   const [updated, setUpdated] = useState("");
   const load = useCallback(async () => {
+    if (rideId === null) return;
     if (!rideId) { setError("A ride ID is required to view tracking."); return; }
     try {
       const response = await fetch("/api/instant-rides/" + encodeURIComponent(rideId) + "/tracking", { cache: "no-store" });
