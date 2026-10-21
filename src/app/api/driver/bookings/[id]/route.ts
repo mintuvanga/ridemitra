@@ -72,6 +72,7 @@ export async function PATCH(request: NextRequest, context: Context) {
         await tx`update public.bookings set status = 'cancelled' where id = ${id}`;
       } else {
         if (booking.status !== "confirmed") throw new Error("RIDE_NOT_CONFIRMED");
+        if (new Date(booking.departure_at).getTime() > Date.now()) throw new Error("TRIP_NOT_STARTED");
         await tx`update public.bookings set status = 'completed', completed_at = now() where id = ${id}`;
       }
       return { id, status: action === "accept" ? "confirmed" : action === "reject" ? "cancelled" : "completed" };
@@ -85,6 +86,7 @@ export async function PATCH(request: NextRequest, context: Context) {
       NO_SEATS: { status: 409, error: "There are not enough seats available." },
       TRIP_DEPARTED: { status: 409, error: "This journey has already departed or is no longer available." },
       RIDE_NOT_CONFIRMED: { status: 409, error: "Only an accepted ride can be completed." },
+      TRIP_NOT_STARTED: { status: 409, error: "This journey cannot be marked completed before its departure time." },
       AUTH_REQUIRED: { status: 401, error: "Sign in to update this ride." },
     };
     if (known[message]) return NextResponse.json({ error: known[message].error }, { status: known[message].status });
