@@ -535,15 +535,9 @@ export default function DriverInstantRidesPage() {
       </div>
 
       <nav aria-label="Driver app navigation" className="fixed inset-x-0 bottom-0 z-[850] border-t border-white/10 bg-[#071827]/95 px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur-xl">
-        <div className="mx-auto grid w-full max-w-[520px] grid-cols-6 gap-1">
+        <div className="mx-auto grid w-full max-w-[520px] grid-cols-4 gap-1">
           <Link href="/driver/instant-rides" aria-current="page" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl bg-emerald-300/10 px-1 text-emerald-200">
             <span className="text-xl leading-5">⌂</span><span className="text-[10px] font-extrabold">Home</span>
-          </Link>
-          <Link href="/driver/rides" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-slate-100">
-            <span className="text-xl leading-5">↗</span><span className="text-[10px] font-extrabold">My rides</span>
-          </Link>
-          <Link href="#driver-map" onClick={(event) => { event.preventDefault(); document.getElementById("driver-map")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} aria-label="Maps" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-emerald-200">
-            <span className="text-xl leading-5">⌖</span><span className="text-[10px] font-extrabold">Maps</span>
           </Link>
           <Link href="/driver/new-ride-requests" aria-label="New ride requests" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-emerald-200">
             <span className="text-xl leading-5">＋</span><span className="text-[10px] font-extrabold">New rides</span>
