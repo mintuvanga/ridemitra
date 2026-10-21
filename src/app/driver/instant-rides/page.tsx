@@ -1,41 +1,172 @@
 "use client";
+
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback,useEffect,useRef,useState } from "react";
-type Ride={id:string;pickup:string;destination:string;vehicle_type:string;estimated_fare:number;status:string;passenger_name:string;pickup_distance_km?:number};
-type Presence={is_online:boolean;vehicle_type:"motorcycle"|"auto"|"car";latitude?:number|null;longitude?:number|null};
-const vehicles=[{id:"motorcycle",label:"Bike"},{id:"auto",label:"Auto"},{id:"car",label:"Cab"}];
-const statusNames:Record<string,string>={accepted:"Accepted",arriving:"Arriving at pickup",in_progress:"Ride in progress",completed:"Completed"};
-export default function DriverInstantRidesPage(){
- const [presence,setPresence]=useState<Presence>({is_online:false,vehicle_type:"motorcycle"});const [location,setLocation]=useState<{lat:number;lon:number}|null>(null);const [locationMessage,setLocationMessage]=useState("Go online to automatically show your live position on the map.");const [locationBusy,setLocationBusy]=useState(false);const [vehicle,setVehicle]=useState<Presence["vehicle_type"]>("motorcycle");const [requests,setRequests]=useState<Ride[]>([]);const [active,setActive]=useState<Ride[]>([]);const [message,setMessage]=useState("");const [busy,setBusy]=useState("");const [loading,setLoading]=useState(true);const online=useRef(false);const knownRequestIds=useRef<Set<string>|null>(null);const alertsEnabled=useRef(false);const [alertsOn,setAlertsOn]=useState(false);
- const load=useCallback(async()=>{try{const [a,b]=await Promise.all([fetch("/api/driver/presence",{cache:"no-store"}),fetch("/api/driver/instant-rides",{cache:"no-store"})]);const p=await a.json(),r=await b.json();if(a.ok){setPresence(p.presence);setVehicle(p.presence.vehicle_type);online.current=p.presence.is_online;if(p.presence.is_online&&p.presence.latitude!=null&&p.presence.longitude!=null){setLocation({lat:Number(p.presence.latitude),lon:Number(p.presence.longitude)});setLocationMessage("You are online. Map shows your latest shared GPS position.");}}if(b.ok){const nextRequests:Ride[]=r.requests||[];const nextIds=new Set(nextRequests.map((item:Ride)=>item.id));if(knownRequestIds.current&&alertsEnabled.current&&typeof Notification!=="undefined"&&Notification.permission==="granted"){for(const item of nextRequests){if(!knownRequestIds.current.has(item.id)){new Notification("New RideMitra request",{body:`${item.passenger_name} · ${item.pickup} → ${item.destination} · ₹${Number(item.estimated_fare).toFixed(0)}`});}}}knownRequestIds.current=nextIds;setRequests(nextRequests);setActive(r.active||[])}else setMessage(r.error||"Sign in to use driver mode")}catch{setMessage("Network error. Refresh and try again")}finally{setLoading(false)}},[]);
- useEffect(()=>{void load();const t=window.setInterval(()=>void load(),5000);return()=>window.clearInterval(t)},[load]);
- const sendPresence=useCallback((is_online:boolean,type:Presence["vehicle_type"])=>{if(!is_online){setLocationMessage("You are offline. Go online to share GPS and show your map.");void fetch("/api/driver/presence",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({is_online:false,vehicle_type:type})}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error);setPresence(d.presence);online.current=false;setMessage("You are offline")}).catch(e=>setMessage(e instanceof Error?e.message:"Unable to go offline"));return}if(!navigator.geolocation){setMessage("GPS location is not supported");return}navigator.geolocation.getCurrentPosition(async pos=>{try{const r=await fetch("/api/driver/presence",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({is_online:true,vehicle_type:type,latitude:pos.coords.latitude,longitude:pos.coords.longitude})});const d=await r.json();if(!r.ok)throw new Error(d.error);setPresence(d.presence);setLocation({lat:pos.coords.latitude,lon:pos.coords.longitude});setLocationMessage("You are online. Your map is ready and will follow GPS updates while this page stays open.");online.current=true;setMessage("Online. Your map is now showing your location. Keep this page open for GPS updates.");}catch(e){setMessage(e instanceof Error?e.message:"Unable to go online")}},()=>setMessage("Allow location permission to go online"),{enableHighAccuracy:true,timeout:15000,maximumAge:10000})},[]);
- useEffect(()=>{
-  if(!presence.is_online||!navigator.geolocation)return;
-  let lastSentAt=0;
-  let lastLat:number|null=null;
-  let lastLon:number|null=null;
-  let sending=false;
-  const watchId=navigator.geolocation.watchPosition(async pos=>{
-   const now=Date.now();
-   const lat=pos.coords.latitude,lon=pos.coords.longitude;
-   const moved=lastLat===null||lastLon===null||Math.abs(lat-lastLat)>0.00025||Math.abs(lon-lastLon)>0.00025;
-   if(sending||(!moved&&now-lastSentAt<20000)||now-lastSentAt<10000)return;
-   sending=true;
-   try{
-    const response=await fetch("/api/driver/presence",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({is_online:true,vehicle_type:vehicle,latitude:lat,longitude:lon})});
-    const data=await response.json();
-    if(!response.ok)throw new Error(data.error||"Unable to update GPS");
-    lastSentAt=Date.now();lastLat=lat;lastLon=lon;setPresence(data.presence);setLocation({lat,lon});setLocationMessage("Live GPS updated. The map shows your latest shared position.");online.current=true;
-   }catch(error){setMessage(error instanceof Error?error.message:"GPS update failed")}
-   finally{sending=false}
-  },err=>{setMessage(err.code===1?"Location permission is needed to share live GPS.":"GPS signal unavailable. Keep the driver page open and check device location settings.")},{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
-  return()=>navigator.geolocation.clearWatch(watchId);
- },[presence.is_online,vehicle]);
- async function act(ride:Ride,action:string){setBusy(ride.id);setMessage("");try{const r=await fetch("/api/driver/instant-rides",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({ride_id:ride.id,action})});const d=await r.json();if(!r.ok)throw new Error(d.error);setMessage("Ride status updated: "+d.ride.status);await load();if(["accept","arriving","start"].includes(action)){const dest=action==="start"?ride.destination:ride.pickup;window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(dest)+"&travelmode=driving","_blank","noopener,noreferrer")}}catch(e){setMessage(e instanceof Error?e.message:"Unable to update ride")}finally{setBusy("")}}
- return <main className="min-h-screen bg-slate-50 text-slate-900 pb-24 sm:pb-8"><div className="mx-auto max-w-3xl px-3 py-3 sm:px-6 sm:py-6"><header className="sticky top-0 z-30 -mx-3 mb-3 flex items-center justify-between gap-2 border-b border-sky-100 bg-white/95 px-3 py-3 shadow-sm backdrop-blur sm:static sm:mx-0 sm:mb-0 sm:rounded-2xl sm:border sm:px-5 sm:py-4"><Link href="/" className="shrink-0 text-lg font-black sm:text-xl">Ride<span className="text-sky-600">Mitra</span></Link><div className="flex items-center gap-2"><Link href="/driver/onboarding" className="rounded-xl border border-sky-200 px-2.5 py-2 text-xs font-bold text-sky-700 hover:bg-sky-50 sm:px-3 sm:text-sm">Vehicle</Link><Link href="/driver/notifications" className="rounded-xl border border-sky-200 px-2.5 py-2 text-xs font-bold text-sky-700 hover:bg-sky-50 sm:px-3 sm:text-sm">Activity</Link><span className="hidden rounded-full bg-sky-100 px-3 py-1.5 text-xs font-bold text-sky-800 sm:inline-flex">DRIVER MODE</span></div></header><section className="mt-3 rounded-2xl bg-gradient-to-br from-sky-600 to-blue-700 p-4 text-white sm:mt-6 sm:rounded-3xl sm:p-6"><p className="text-xs font-bold uppercase tracking-widest text-sky-100">Captain workspace</p><h1 className="mt-2 text-2xl font-black sm:text-3xl">Nearby ride requests</h1><p className="mt-2 text-sm text-sky-50">Online drivers receive matching vehicle requests within 15 km.</p></section>
- <section id="location" className="mt-3 overflow-hidden rounded-2xl border border-sky-100 bg-white shadow-sm sm:mt-5 sm:rounded-3xl"><div className="flex items-center justify-between gap-3 p-4 sm:p-5"><div><h2 className="text-lg font-black">Your location</h2><p className="mt-1 text-xs text-slate-500">{presence.is_online ? "Your map updates automatically while you are online" : location ? "Showing your last shared position" : "Map preview; your live position appears after GPS access"}</p></div><button type="button" disabled={locationBusy} onClick={()=>{if(!navigator.geolocation){setLocationMessage("This browser does not support location.");return;}setLocationBusy(true);setLocationMessage("Requesting location permission…");navigator.geolocation.getCurrentPosition(pos=>{setLocation({lat:pos.coords.latitude,lon:pos.coords.longitude});setLocationMessage("Location found. Your map is centred on your device.");setLocationBusy(false);},err=>{setLocationMessage(err.code===1?"Location permission was denied. Allow it in your browser settings to show your position.":"Could not get location. Check GPS and try again.");setLocationBusy(false);},{enableHighAccuracy:true,timeout:15000,maximumAge:10000});}} className="rounded-xl bg-sky-600 px-3 py-2.5 text-sm font-extrabold text-white disabled:opacity-50">{locationBusy?"Locating…":presence.is_online?"Refresh map location":location?"Refresh location":"Show my location"}</button></div><div className="relative"><iframe title={location ? "Map showing your current device location" : "Map preview waiting for GPS"} className="h-72 w-full border-0 sm:h-96" loading="eager" referrerPolicy="no-referrer" src={location ? "https://www.openstreetmap.org/export/embed.html?bbox="+(location.lon-0.015)+"%2C"+(location.lat-0.01)+"%2C"+(location.lon+0.015)+"%2C"+(location.lat+0.01)+"&layer=mapnik&marker="+location.lat+"%2C"+location.lon : "https://www.openstreetmap.org/export/embed.html?bbox=78.35%2C17.32%2C78.62%2C17.48&layer=mapnik"} />{!location&&<div className="absolute inset-x-3 bottom-3 rounded-xl border border-amber-200 bg-white/95 p-3 text-sm font-semibold text-slate-800 shadow"><span className="block">Map preview — waiting for your GPS</span><span className="mt-1 block text-xs font-normal text-slate-600">This preview is not your live position. Go online and allow location access to center the map on you.</span></div>}</div><p role="status" className="px-4 pb-4 text-xs text-slate-500">{locationMessage} {location&&<span>Coordinates: {location.lat.toFixed(5)}, {location.lon.toFixed(5)}</span>}</p></section> <section id="availability" className="mt-3 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm sm:mt-5 sm:rounded-3xl sm:p-5"><div className="flex items-center justify-between gap-3"><h2 className="text-xl font-black">{presence.is_online?"You are online":"You are offline"}</h2><span className={"rounded-full px-3 py-1 text-xs font-bold "+(presence.is_online?"bg-emerald-100 text-emerald-800":"bg-slate-100 text-slate-600")}>{presence.is_online?"ONLINE":"OFFLINE"}</span></div><div className="mt-4 rounded-xl bg-slate-50 p-3"><p className="text-xs font-bold uppercase text-slate-500">Registered vehicle</p><p className="mt-1 font-black">{vehicles.find(v=>v.id===presence.vehicle_type)?.label || "Vehicle on file"}</p><p className="mt-1 text-xs text-slate-500">Vehicle type is set during driver onboarding.</p></div><div className="mt-4 grid grid-cols-2 gap-3"><button disabled={presence.is_online} onClick={()=>sendPresence(true,vehicle)} className="rounded-xl bg-sky-600 p-3 font-bold text-white disabled:opacity-50">Go online</button><button disabled={!presence.is_online} onClick={()=>sendPresence(false,vehicle)} className="rounded-xl border border-slate-200 p-3 font-bold disabled:opacity-50">Go offline</button></div>{message&&<p role="status" className="mt-3 rounded-xl bg-sky-50 p-3 text-sm text-sky-800">{message}</p>}</section>
- <section id="requests" className="mt-3 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm sm:mt-5 sm:rounded-3xl sm:p-5"><div className="flex justify-between gap-3"><h2 className="text-xl font-black">Incoming requests</h2><div className="flex gap-2"><button onClick={async()=>{if(typeof Notification==="undefined"){setMessage("Browser notifications are not supported.");return;}const permission=Notification.permission==="default"?await Notification.requestPermission():Notification.permission;if(permission==="granted"){alertsEnabled.current=true;setAlertsOn(true);setMessage("New ride alerts enabled on this device.");}else setMessage("Notifications are blocked. Allow them in browser settings.");}} className="rounded-xl border border-sky-200 px-3 py-2 text-xs font-bold text-sky-700">{alertsOn?"Alerts on":"Enable alerts"}</button><button onClick={()=>void load()} className="rounded-xl border px-3 py-2 text-sm font-bold">Refresh</button></div></div>{!presence.is_online?<p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Go online and allow GPS access to receive requests.</p>:loading?<p className="mt-4 text-sm text-slate-500">Loading…</p>:requests.length===0?<p className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">No matching requests within 15 km. Checking every 5 seconds.</p>:null}<div className="mt-4 space-y-3">{requests.map(r=><article key={r.id} className="rounded-2xl border border-sky-100 p-4"><div className="flex justify-between gap-3"><div><p className="text-xs font-bold text-sky-700">{vehicles.find(v=>v.id===r.vehicle_type)?.label} · {Number(r.pickup_distance_km||0).toFixed(1)} km away</p><h3 className="mt-1 text-lg font-black">{r.passenger_name}</h3></div><strong className="text-xl text-sky-700">₹{Number(r.estimated_fare).toFixed(0)}</strong></div><p className="mt-3 text-xs font-bold uppercase text-slate-500">Pickup</p><p className="font-semibold">{r.pickup}</p><p className="mt-3 text-xs font-bold uppercase text-slate-500">Destination</p><p className="font-semibold">{r.destination}</p><div className="mt-4 grid grid-cols-2 gap-3"><button disabled={busy===r.id} onClick={()=>void act(r,"reject")} className="rounded-xl border border-rose-200 p-3 font-bold text-rose-700">Reject</button><button disabled={busy===r.id} onClick={()=>void act(r,"accept")} className="rounded-xl bg-emerald-600 p-3 font-bold text-white">{busy===r.id?"Updating…":"Accept ride"}</button></div></article>)}</div></section>
- <section id="active-rides" className="mt-3 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm sm:mt-5 sm:rounded-3xl sm:p-5"><h2 className="text-xl font-black">Active rides</h2>{active.length===0?<p className="mt-3 text-sm text-slate-500">Accepted rides appear here.</p>:<div className="mt-4 space-y-3">{active.map(r=><article key={r.id} className="rounded-2xl border p-4"><div className="flex justify-between gap-3"><h3 className="font-black">{r.passenger_name}</h3><span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-bold">{statusNames[r.status]||r.status}</span></div><p className="mt-3 text-sm"><b>Pickup:</b> {r.pickup}</p><p className="mt-1 text-sm"><b>Destination:</b> {r.destination}</p><div className="mt-4 flex flex-wrap gap-2">{r.status==="accepted"&&<button onClick={()=>void act(r,"arriving")} className="rounded-xl bg-sky-600 px-4 py-3 text-sm font-bold text-white">Arriving at pickup</button>}{r.status==="arriving"&&<button onClick={()=>void act(r,"start")} className="rounded-xl bg-sky-600 px-4 py-3 text-sm font-bold text-white">Start ride</button>}{r.status==="in_progress"&&<button onClick={()=>void act(r,"complete")} className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white">Complete ride</button>}<a target="_blank" rel="noreferrer" href={"https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(r.status==="in_progress"?r.destination:r.pickup)+"&travelmode=driving"} className="rounded-xl border border-sky-200 px-4 py-3 text-sm font-bold text-sky-700">Navigate ↗</a><Link href={"/ride/track?ride="+encodeURIComponent(r.id)} className="rounded-xl border border-sky-200 px-4 py-3 text-sm font-bold text-sky-700">Live tracking ↗</Link></div></article>)}</div>}</section>
- <p className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950"><b>Important:</b> fares are estimates only. Online availability and ride acceptance require approved driver verification. Payments are not connected. Your driver map and latest shared GPS position are available while you are online and this page remains open.</p></div><nav aria-label="Driver navigation" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-slate-200 bg-white/95 px-1 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_-4px_18px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden"><a href="#availability" className="flex flex-col items-center gap-1 px-1 py-2 text-[11px] font-bold text-sky-700"><span className="text-xl" aria-hidden="true">⌂</span>Home</a><a href="#requests" className="flex flex-col items-center gap-1 px-1 py-2 text-[11px] font-bold text-slate-600"><span className="text-xl" aria-hidden="true">↗</span>Requests</a><a href="#active-rides" className="flex flex-col items-center gap-1 px-1 py-2 text-[11px] font-bold text-slate-600"><span className="text-xl" aria-hidden="true">✓</span>Active</a><a href="#location" className="flex flex-col items-center gap-1 px-1 py-2 text-[11px] font-bold text-slate-600"><span className="text-xl" aria-hidden="true">⌖</span>Map</a></nav></main>
+import { useCallback, useEffect, useRef, useState } from "react";
+
+const DriverLiveMap = dynamic(() => import("./DriverLiveMap"), { ssr: false, loading: () => <div className="h-full min-h-[420px] animate-pulse bg-slate-100" /> });
+type Ride = { id: string; pickup: string; destination: string; vehicle_type: string; estimated_fare: number; status: string; passenger_name: string; pickup_distance_km?: number };
+type Presence = { is_online: boolean; vehicle_type: "motorcycle" | "auto" | "car"; latitude?: number | null; longitude?: number | null };
+const vehicles = [{ id: "motorcycle", label: "Bike" }, { id: "auto", label: "Auto" }, { id: "car", label: "Cab" }];
+const statusNames: Record<string, string> = { accepted: "Accepted", arriving: "Arriving at pickup", in_progress: "Ride in progress", completed: "Completed" };
+
+export default function DriverInstantRidesPage() {
+  const [presence, setPresence] = useState<Presence>({ is_online: false, vehicle_type: "motorcycle" });
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [locationStatus, setLocationStatus] = useState("Allow location access to show your live position.");
+  const [locating, setLocating] = useState(false);
+  const [requests, setRequests] = useState<Ride[]>([]);
+  const [active, setActive] = useState<Ride[]>([]);
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sheet, setSheet] = useState<"requests" | "active" | null>(null);
+  const [switching, setSwitching] = useState(false);
+  const watchId = useRef<number | null>(null);
+  const onlineRef = useRef(false);
+
+  const load = useCallback(async () => {
+    try {
+      const [presenceResponse, ridesResponse] = await Promise.all([
+        fetch("/api/driver/presence", { cache: "no-store" }),
+        fetch("/api/driver/instant-rides", { cache: "no-store" })
+      ]);
+      const p = await presenceResponse.json();
+      const r = await ridesResponse.json();
+      if (presenceResponse.ok && p.presence) {
+        setPresence(p.presence);
+        onlineRef.current = p.presence.is_online;
+        if (p.presence.latitude != null && p.presence.longitude != null) {
+          setLocation({ lat: Number(p.presence.latitude), lon: Number(p.presence.longitude) });
+          setLocationStatus("Your latest GPS position is on the map.");
+        }
+      }
+      if (ridesResponse.ok) {
+        setRequests(r.requests || []);
+        setActive(r.active || []);
+      } else setMessage(r.error || "Sign in to use driver mode.");
+    } catch { setMessage("Could not refresh driver details. Check your connection."); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { void load(); const timer = window.setInterval(() => void load(), 5000); return () => window.clearInterval(timer); }, [load]);
+
+  const stopWatching = useCallback(() => {
+    if (watchId.current !== null && typeof navigator !== "undefined" && navigator.geolocation) navigator.geolocation.clearWatch(watchId.current);
+    watchId.current = null;
+  }, []);
+
+  const startWatching = useCallback((vehicle: Presence["vehicle_type"]) => {
+    if (!navigator.geolocation) { setLocationStatus("This browser does not support GPS location."); return; }
+    stopWatching();
+    setLocationStatus("Waiting for GPS signal…");
+    watchId.current = navigator.geolocation.watchPosition(async pos => {
+      const next = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      setLocation(next);
+      setLocationStatus("Live GPS position updating on the map.");
+      try {
+        const response = await fetch("/api/driver/presence", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_online: true, vehicle_type: vehicle, latitude: next.lat, longitude: next.lon })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Could not share GPS.");
+        setPresence(data.presence);
+      } catch (error) { setMessage(error instanceof Error ? error.message : "GPS update failed."); }
+    }, error => {
+      const text = error.code === 1 ? "Location permission denied. Allow location for this site in your browser settings." : error.code === 2 ? "GPS location is unavailable. Turn on device location and try again." : "GPS is taking too long. Check location settings and retry.";
+      setLocationStatus(text);
+      setMessage(text);
+    }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 });
+  }, [stopWatching]);
+
+  useEffect(() => {
+    if (presence.is_online) startWatching(presence.vehicle_type);
+    else stopWatching();
+    return () => stopWatching();
+  }, [presence.is_online, presence.vehicle_type, startWatching, stopWatching]);
+
+  async function toggleOnline() {
+    if (switching) return;
+    setSwitching(true); setMessage("");
+    if (presence.is_online) {
+      stopWatching();
+      try {
+        const response = await fetch("/api/driver/presence", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ is_online: false, vehicle_type: presence.vehicle_type }) });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to go offline.");
+        setPresence(data.presence); onlineRef.current = false;
+        setLocationStatus("You are offline. Your last location is not live.");
+        setMessage("You are now offline.");
+      } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to go offline."); }
+      finally { setSwitching(false); }
+      return;
+    }
+    if (!navigator.geolocation) { setMessage("This browser does not support GPS."); setSwitching(false); return; }
+    setLocating(true); setLocationStatus("Getting your GPS location before going online…");
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      try {
+        const response = await fetch("/api/driver/presence", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ is_online: true, vehicle_type: presence.vehicle_type, latitude: coords.lat, longitude: coords.lon }) });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Unable to go online.");
+        setLocation(coords); setPresence(data.presence); onlineRef.current = true;
+        setLocationStatus("Live GPS active. Your map will follow your position.");
+        setMessage("You're online. Your live map is ready.");
+        startWatching(presence.vehicle_type);
+      } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to go online."); setLocationStatus("Could not start GPS sharing."); }
+      finally { setLocating(false); setSwitching(false); }
+    }, error => {
+      const text = error.code === 1 ? "Location permission denied. Allow location for this website, then try again." : "Could not get GPS. Turn on device location and retry.";
+      setMessage(text); setLocationStatus(text); setLocating(false); setSwitching(false);
+    }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 3000 });
+  }
+
+  async function act(ride: Ride, action: string) {
+    setBusy(ride.id); setMessage("");
+    try {
+      const response = await fetch("/api/driver/instant-rides", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ride_id: ride.id, action }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to update ride.");
+      setMessage("Ride updated: " + (statusNames[data.ride?.status] || data.ride?.status || "success"));
+      await load();
+      if (["accept", "arriving", "start"].includes(action)) {
+        const destination = action === "start" ? ride.destination : ride.pickup;
+        window.open("https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destination) + "&travelmode=driving", "_blank", "noopener,noreferrer");
+      }
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to update ride."); }
+    finally { setBusy(""); }
+  }
+
+  const currentVehicle = vehicles.find(v => v.id === presence.vehicle_type)?.label || "Driver";
+  return <main className="relative h-[100dvh] min-h-[560px] w-full overflow-hidden bg-slate-100 text-slate-900">
+    <div className="absolute inset-0"><DriverLiveMap location={location} online={presence.is_online} onLocate={() => {
+      if (!navigator.geolocation) { setMessage("GPS is not supported by this browser."); return; }
+      setLocating(true);
+      navigator.geolocation.getCurrentPosition(pos => { const next = { lat: pos.coords.latitude, lon: pos.coords.longitude }; setLocation(next); setLocationStatus("Map centered on your current location."); setLocating(false); }, err => { setLocationStatus(err.code === 1 ? "Location permission denied. Allow location for this website." : "Unable to get GPS location."); setLocating(false); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 });
+    }} locating={locating} status={locationStatus} /></div>
+
+    <header className="absolute left-3 right-3 top-3 z-[600] flex items-center justify-between gap-2 sm:left-5 sm:right-5 sm:top-5">
+      <Link href="/" className="rounded-2xl border border-white/70 bg-white/95 px-4 py-3 text-lg font-black shadow-lg backdrop-blur">Ride<span className="text-sky-600">Mitra</span></Link>
+      <div className="flex gap-2"><Link href="/driver/notifications" className="rounded-2xl border border-white/70 bg-white/95 px-3 py-3 text-sm font-bold shadow-lg backdrop-blur">Activity</Link><Link href="/driver/onboarding" className="rounded-2xl border border-white/70 bg-white/95 px-3 py-3 text-sm font-bold shadow-lg backdrop-blur">Vehicle</Link></div>
+    </header>
+
+    <div className="absolute bottom-3 left-3 right-3 z-[600] sm:bottom-5 sm:left-5 sm:right-5">
+      {sheet && <section className="mb-3 max-h-[48dvh] overflow-y-auto rounded-3xl border border-white/80 bg-white/95 p-4 shadow-2xl backdrop-blur-xl sm:ml-auto sm:max-w-xl">
+        <div className="mb-3 flex items-center justify-between"><div><h2 className="text-lg font-black">{sheet === "requests" ? "Nearby ride requests" : "Your active rides"}</h2><p className="text-xs text-slate-500">{sheet === "requests" ? requests.length + " available" : active.length + " in progress"}</p></div><button onClick={() => setSheet(null)} className="rounded-full bg-slate-100 px-3 py-2 font-bold" aria-label="Close ride panel">✕</button></div>
+        {sheet === "requests" && (!presence.is_online ? <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Go online to receive matching ride requests.</p> : requests.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">{loading ? "Loading requests…" : "No matching requests yet. New requests refresh automatically."}</p> : <div className="space-y-3">{requests.map(ride => <article key={ride.id} className="rounded-2xl border border-slate-200 p-3"><div className="flex justify-between gap-3"><div><p className="text-xs font-bold text-sky-700">{Number(ride.pickup_distance_km || 0).toFixed(1)} km away · {currentVehicle}</p><h3 className="font-extrabold">{ride.passenger_name}</h3></div><b className="text-lg text-sky-700">₹{Number(ride.estimated_fare).toFixed(0)}</b></div><p className="mt-2 text-sm"><span className="font-bold">Pickup:</span> {ride.pickup}</p><p className="mt-1 text-sm"><span className="font-bold">Drop:</span> {ride.destination}</p><div className="mt-3 grid grid-cols-2 gap-2"><button disabled={busy === ride.id} onClick={() => void act(ride, "reject")} className="rounded-xl border border-rose-200 py-3 text-sm font-bold text-rose-700">Decline</button><button disabled={busy === ride.id} onClick={() => void act(ride, "accept")} className="rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white">{busy === ride.id ? "Please wait…" : "Accept ride"}</button></div></article>)}</div>)}
+        {sheet === "active" && (active.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">Accepted rides will appear here.</p> : <div className="space-y-3">{active.map(ride => <article key={ride.id} className="rounded-2xl border border-slate-200 p-3"><div className="flex justify-between gap-2"><b>{ride.passenger_name}</b><span className="rounded-full bg-sky-100 px-2 py-1 text-xs font-bold">{statusNames[ride.status] || ride.status}</span></div><p className="mt-2 text-sm">Pickup: {ride.pickup}</p><p className="mt-1 text-sm">Drop: {ride.destination}</p><div className="mt-3 flex flex-wrap gap-2">{ride.status === "accepted" && <button onClick={() => void act(ride, "arriving")} className="rounded-xl bg-sky-600 px-3 py-2 text-sm font-bold text-white">I'm arriving</button>}{ride.status === "arriving" && <button onClick={() => void act(ride, "start")} className="rounded-xl bg-sky-600 px-3 py-2 text-sm font-bold text-white">Start ride</button>}{ride.status === "in_progress" && <button onClick={() => void act(ride, "complete")} className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white">Complete ride</button>}<Link href={"/ride/track?ride=" + encodeURIComponent(ride.id)} className="rounded-xl border px-3 py-2 text-sm font-bold">Passenger tracking</Link></div></article>)}</div>)}
+      </section>}
+
+      <section className="rounded-3xl border border-white/80 bg-white/95 p-4 shadow-2xl backdrop-blur-xl sm:ml-auto sm:max-w-xl sm:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0"><div className="flex items-center gap-2"><span className={"h-2.5 w-2.5 rounded-full " + (presence.is_online ? "animate-pulse bg-emerald-500" : "bg-slate-400")} /><h1 className="truncate text-lg font-black">{presence.is_online ? "You're online" : "You're offline"}</h1></div><p className="mt-1 truncate text-xs text-slate-500">{presence.is_online ? "Finding rides near you · " + currentVehicle : "Go online to start receiving nearby rides"}</p></div>
+          <button onClick={() => void toggleOnline()} disabled={switching} className={"shrink-0 rounded-2xl px-5 py-3 text-sm font-extrabold text-white shadow-md disabled:opacity-60 " + (presence.is_online ? "bg-slate-800" : "bg-emerald-600")}>{switching ? "Please wait…" : locating ? "Finding GPS…" : presence.is_online ? "Go offline" : "Go online"}</button>
+        </div>
+        <div className="mt-3 flex gap-2"><button onClick={() => setSheet(sheet === "requests" ? null : "requests")} className={"flex-1 rounded-xl px-3 py-3 text-sm font-extrabold " + (sheet === "requests" ? "bg-sky-600 text-white" : "bg-sky-50 text-sky-800")}>Ride requests <span className="ml-1 rounded-full bg-white/80 px-2 py-0.5 text-xs">{requests.length}</span></button><button onClick={() => setSheet(sheet === "active" ? null : "active")} className={"flex-1 rounded-xl px-3 py-3 text-sm font-extrabold " + (sheet === "active" ? "bg-sky-600 text-white" : "bg-sky-50 text-sky-800")}>Active rides <span className="ml-1 rounded-full bg-white/80 px-2 py-0.5 text-xs">{active.length}</span></button></div>
+        {(message || (presence.is_online && locationStatus && !location)) && <p role="status" className="mt-3 rounded-xl bg-amber-50 p-3 text-xs leading-5 text-amber-900">{message || locationStatus}</p>}
+        <p className="mt-2 text-[10px] leading-4 text-slate-500">GPS sharing works while this page stays open and location permission is enabled. Fares are estimates; payments are not connected.</p>
+      </section>
+    </div>
+  </main>;
 }
