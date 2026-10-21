@@ -61,11 +61,11 @@ export default function NewRideRequestsPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to update this ride.");
-      await load();
       if (action === "accept") {
-        window.location.href = "https://www.google.com/maps/dir/?api=1&destination=" +
-          encodeURIComponent(ride.pickup) + "&travelmode=driving";
+        window.location.href = "/driver/active-ride?ride=" + encodeURIComponent(ride.id);
+        return;
       }
+      await load();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to update this ride.");
     } finally {
