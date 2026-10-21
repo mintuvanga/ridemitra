@@ -95,6 +95,7 @@ const schemaStatements = [
     created_at timestamptz not null default now(),
     unique (trip_id, passenger_id)
   )`,
+  `alter table public.bookings add column if not exists completed_at timestamptz`,
   `create index if not exists bookings_trip_idx on public.bookings(trip_id)`,
   `create index if not exists bookings_passenger_idx on public.bookings(passenger_id)`,
   `create table if not exists public.driver_presence (
