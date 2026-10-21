@@ -74,7 +74,7 @@ export default function NewRideRequestsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#071827] px-3 py-4 text-[#edf7f7] sm:px-4">
+    <main className="min-h-screen bg-[#071827] px-3 py-4 pb-24 text-[#edf7f7] sm:px-4">
       <div className="mx-auto w-full max-w-[520px]">
         <header className="flex items-center justify-between gap-3">
           <Link href="/driver/instant-rides" className="text-lg font-black">Ride<span className="text-emerald-300">Mitra</span></Link>
@@ -114,6 +114,22 @@ export default function NewRideRequestsPage() {
           </article>
         ))}</div>}
       </div>
+      <nav aria-label="Driver app navigation" className="fixed inset-x-0 bottom-0 z-[850] border-t border-white/10 bg-[#071827]/95 px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur-xl">
+        <div className="mx-auto grid w-full max-w-[520px] grid-cols-4 gap-1">
+          <Link href="/driver/instant-rides" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-emerald-200">
+            <span className="text-xl leading-5">⌂</span><span className="text-[10px] font-extrabold">Home</span>
+          </Link>
+          <Link href="/driver/new-ride-requests" aria-current="page" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl bg-emerald-300/10 px-1 text-emerald-200">
+            <span className="text-xl leading-5">＋</span><span className="text-[10px] font-extrabold">New rides</span>
+          </Link>
+          <Link href="/driver/earnings" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-slate-100">
+            <span className="text-xl leading-5">₹</span><span className="text-[10px] font-extrabold">Earnings</span>
+          </Link>
+          <Link href="/driver/instant-rides" aria-label="More options" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-slate-100">
+            <span className="text-2xl leading-5">⋯</span><span className="text-[10px] font-extrabold">More</span>
+          </Link>
+        </div>
+      </nav>
     </main>
   );
 }
