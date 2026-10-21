@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import DemoMenu from "@/components/demo/DemoMenu";
 
 const pages: Record<string, { title: string; description: string; items: { title: string; detail: string; action?: string }[] }> = {
   dashboard: { title: "Driver dashboard", description: "A safe, simulated view of the driver workspace.", items: [{ title: "Availability", detail: "Switch demo availability without sharing GPS.", action: "Toggle availability" }, { title: "Verification", detail: "Review the four onboarding requirements.", action: "View checklist" }, { title: "Ride activity", detail: "Review fictional active and completed ride examples.", action: "View rides" }] },
@@ -31,8 +32,8 @@ export default function DemoFeaturePage() {
   const [count, setCount] = useState(0);
   return <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-blue-50 px-4 py-6 text-slate-900 sm:px-6">
     <div className="mx-auto max-w-6xl">
-      <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-100 bg-white px-5 py-4 shadow-sm">
-        <Link href="/demo" className="text-2xl font-black">Ride<span className="text-sky-600">Mitra</span></Link>
+      <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-100 bg-white px-4 py-3 shadow-sm sm:px-5 sm:py-4">
+        <div className="flex items-center gap-3"><DemoMenu /><Link href="/demo" className="text-2xl font-black">Ride<span className="text-sky-600">Mitra</span></Link></div>
         <span className="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-extrabold text-violet-800">GUEST DEMO · NO LOGIN</span>
       </header>
       <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950"><strong>Simulation only:</strong> This is a safe preview of the real page layout. Buttons change sample UI only. No live account, passenger, GPS, personal documents, bookings, or payouts are affected.</div>
