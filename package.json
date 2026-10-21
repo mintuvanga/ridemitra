@@ -25,6 +25,7 @@
     "eslint-config-next": "16.4.2",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "@types/leaflet": "^1.9.20"
+    "@types/leaflet": "^1.9.20",
+    "@tailwindcss/postcss": "^4"
   }
 }
