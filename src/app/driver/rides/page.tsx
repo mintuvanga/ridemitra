@@ -195,10 +195,21 @@ export default function DriverRidesPage() {
           <div className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-xs leading-5 text-amber-100"><strong>Driver verification:</strong> Driver identity and vehicle verification are not yet connected to an authoritative review service. This page shows actual database bookings for journeys owned by your account; it does not mean the driver is verified or provide live GPS tracking.</div>
         </section>
 
-        <nav className="fixed inset-x-0 bottom-0 z-[850] grid grid-cols-3 gap-2 border-t border-white/10 bg-[#071827]/95 px-3 pb-[max(env(safe-area-inset-bottom),6px)] pt-2 backdrop-blur-xl" aria-label="Driver navigation">
-          <Link href="/driver" className="min-h-[58px] rounded-xl border border-white/10 bg-white/5 p-3 text-center text-xs font-bold text-slate-300 transition hover:bg-white/10"><span className="block text-xl">⌂</span><span className="mt-1 block">Dashboard</span></Link>
-          <Link href="/driver/rides" aria-current="page" className="min-h-[58px] rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-3 text-center text-xs font-bold text-emerald-200"><span className="block text-xl">🛺</span><span className="mt-1 block">My rides</span></Link>
-          <Link href="/support" className="min-h-[58px] rounded-xl border border-white/10 bg-white/5 p-3 text-center text-xs font-bold text-slate-300 transition hover:bg-white/10"><span className="block text-xl">♡</span><span className="mt-1 block">Support</span></Link>
+        <nav aria-label="Driver app navigation" className="fixed inset-x-0 bottom-0 z-[850] border-t border-white/10 bg-[#071827]/95 px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur-xl">
+          <div className="mx-auto grid w-full max-w-[520px] grid-cols-4 gap-1">
+            <Link href="/driver/instant-rides" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-emerald-200">
+              <span className="text-xl leading-5">⌂</span><span className="text-[10px] font-extrabold">Home</span>
+            </Link>
+            <Link href="/driver/new-ride-requests" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-emerald-200">
+              <span className="text-xl leading-5">＋</span><span className="text-[10px] font-extrabold">New rides</span>
+            </Link>
+            <Link href="/driver/earnings" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-slate-100">
+              <span className="text-xl leading-5">₹</span><span className="text-[10px] font-extrabold">Earnings</span>
+            </Link>
+            <Link href="/driver/instant-rides" aria-label="More options" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-slate-100">
+              <span className="text-2xl leading-5">⋯</span><span className="text-[10px] font-extrabold">More</span>
+            </Link>
+          </div>
         </nav>
         <footer className="pb-4 pt-7 text-center text-[10px] text-slate-500">RideMitra Driver · Booking data comes from the RideMitra database.</footer>
       </div>
