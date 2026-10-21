@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import DemoMenu from "@/components/demo/DemoMenu";
 
 type DemoStatus = "Requested" | "Accepted" | "Arriving" | "In progress" | "Completed" | "Rejected";
 type DemoRide = { id: string; passenger: string; route: string; vehicle: string; fare: number; status: DemoStatus };
