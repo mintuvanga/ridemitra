@@ -87,6 +87,7 @@ export default function DriverHomePage() {
             <Link href="/driver/trips" className="rounded-xl border border-sky-200 px-3 py-2 text-sm font-bold text-sky-700 transition hover:bg-sky-50">My journeys</Link>
             <Link href="/driver/profile" className="rounded-xl border border-sky-200 px-3 py-2 text-sm font-bold text-sky-700 transition hover:bg-sky-50">My profile</Link>
             <Link href="/driver/earnings" className="rounded-xl border border-sky-200 px-3 py-2 text-sm font-bold text-sky-700 transition hover:bg-sky-50">Earnings ₹</Link>
+            <Link href="/driver/notifications" className="rounded-xl border border-sky-200 px-3 py-2 text-sm font-bold text-sky-700 transition hover:bg-sky-50">Ride activity ↗</Link>
             <Link href="/support" className="rounded-xl border border-sky-200 px-3 py-2 text-sm font-bold text-sky-700 transition hover:bg-sky-50">Help ↗</Link>
           </div>
         </header>
