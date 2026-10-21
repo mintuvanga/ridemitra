@@ -12,7 +12,8 @@ export async function GET() {
     await ensureSchema();
     const sql = getSql();
     const rows = await sql`select is_online, vehicle_type, latitude, longitude, updated_at from public.driver_presence where driver_id = ${user.id} limit 1`;
-    return NextResponse.json({ presence: rows[0] ?? { is_online: false, vehicle_type: "motorcycle", latitude: null, longitude: null } });
+    const application = await sql`select vehicle_type from public.driver_application_details where user_id = ${user.id} limit 1`;
+    return NextResponse.json({ presence: rows[0] ?? { is_online: false, vehicle_type: application[0]?.vehicle_type ?? "motorcycle", latitude: null, longitude: null } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     const status = message.includes("DATABASE_URL") || message.includes("Database is not configured") ? 503 : 500;
@@ -33,7 +34,10 @@ export async function POST(request: NextRequest) {
     if (online && (!Number.isFinite(lat) || !Number.isFinite(lng) || lat! < -90 || lat! > 90 || lng! < -180 || lng! > 180)) return NextResponse.json({ error: "Location permission is required to go online." }, { status: 400 });
     await ensureSchema();
     const sql = getSql();
+    const application = await sql`select vehicle_type, registration_number from public.driver_application_details where user_id = ${user.id} limit 1`;
+    if (application[0] && application[0].vehicle_type !== vehicle) return NextResponse.json({ error: "Your selected vehicle does not match your registered vehicle. Update onboarding first." }, { status: 409 });
     if (online) {
+      if (!application[0]) return NextResponse.json({ error: "Complete vehicle registration before going online." }, { status: 403 });
       const verification = await sql`select status from public.driver_verifications where user_id = ${user.id} limit 1`;
       if (verification[0]?.status !== "approved") return NextResponse.json({ error: "Driver verification must be approved before going online." }, { status: 403 });
     }
