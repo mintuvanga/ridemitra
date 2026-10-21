@@ -351,14 +351,14 @@ export default function DriverInstantRidesPage() {
         <div className="absolute -bottom-48 left-1/4 h-[400px] w-[500px] rounded-full bg-cyan-500/5 blur-[120px]" />
       </div>
 
-      <header className="sticky top-0 z-[800] border-b border-white/10 bg-[#071827]/95 px-4 py-3 backdrop-blur-xl sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-3">
+      <header className="sticky top-0 z-[800] border-b border-white/10 bg-[#071827]/95 px-3 py-3 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-[520px] items-center justify-between gap-3">
           <Link href="/driver/instant-rides" className="flex min-w-0 items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-300 to-emerald-500 text-2xl font-black text-[#062033] shadow-lg shadow-emerald-500/15">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-300 to-emerald-500 text-xl font-black text-[#062033] shadow-lg shadow-emerald-500/15">
               R
             </span>
             <span className="min-w-0">
-              <span className="block text-lg font-black tracking-tight">
+              <span className="block text-base font-black tracking-tight">
                 Ride<span className="text-emerald-300">Mitra</span>
               </span>
               <span className="block text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">
@@ -399,76 +399,36 @@ export default function DriverInstantRidesPage() {
               onClick={() => setMenuOpen((open) => !open)}
               aria-label="Open driver menu"
               aria-expanded={menuOpen}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-xl font-bold text-slate-100 hover:bg-white/10 lg:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-xl font-bold text-slate-100 hover:bg-white/10"
             >
-              {menuOpen ? "×" : "☰"}
+              {menuOpen ? "×" : "⋯"}
             </button>
           </div>
         </div>
       </header>
 
       {menuOpen && (
-        <nav className="fixed inset-x-3 top-[72px] z-[900] overflow-hidden rounded-2xl border border-white/10 bg-[#0b2234] shadow-2xl lg:hidden">
-          {navigation.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-3 border-b border-white/5 px-4 py-3 text-sm font-bold text-slate-200 last:border-0 hover:bg-white/5"
-            >
-              <span className="w-6 text-center text-emerald-300">{item.symbol}</span>
-              {item.label}
-              <span className="ml-auto text-slate-500">›</span>
-            </Link>
-          ))}
-        </nav>
+        <>
+          <button type="button" aria-label="Close menu" onClick={() => setMenuOpen(false)} className="fixed inset-0 z-[890] bg-black/55 backdrop-blur-[2px]" />
+          <nav aria-label="More driver options" className="fixed right-3 top-[72px] z-[900] w-[min(340px,calc(100vw-24px))] overflow-hidden rounded-3xl border border-white/10 bg-[#0b2234] p-3 shadow-2xl shadow-black/40">
+            <p className="px-3 pb-2 pt-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-500">Workspace</p>
+            {navigation.map((item) => (
+              <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="mb-1 flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold text-slate-200 transition hover:bg-white/5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-300/10 text-lg text-emerald-200">{item.symbol}</span>
+                <span>{item.label}</span><span className="ml-auto text-slate-500">›</span>
+              </Link>
+            ))}
+            <div className="mt-2 rounded-2xl border border-emerald-300/15 bg-gradient-to-br from-[#0d3a3c] to-[#0b2638] p-4">
+              <p className="text-sm font-black">More rides. More earnings.</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">Keep your status available to receive nearby requests.</p>
+              <Link href="/support" onClick={() => setMenuOpen(false)} className="mt-3 inline-flex text-xs font-extrabold text-emerald-200">Driver support ↗</Link>
+            </div>
+          </nav>
+        </>
       )}
 
-      <div className="relative mx-auto grid max-w-[1500px] gap-5 px-3 py-4 sm:px-6 sm:py-6 lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-7 lg:px-8">
-        <aside className="hidden lg:block">
-          <div className="sticky top-[92px] space-y-4">
-            <section className="rounded-3xl border border-white/10 bg-[#0b2234] p-3 shadow-xl shadow-black/10">
-              <p className="px-3 pb-3 pt-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-500">
-                Workspace
-              </p>
-              {navigation.map((item, index) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={
-                    "mb-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold transition last:mb-0 " +
-                    (index === 0
-                      ? "bg-emerald-300 text-[#062033] shadow-lg shadow-emerald-500/10"
-                      : "text-slate-300 hover:bg-white/5 hover:text-white")
-                  }
-                >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-black/10 text-base">
-                    {item.symbol}
-                  </span>
-                  <span className="min-w-0">{item.label}</span>
-                </Link>
-              ))}
-            </section>
-
-            <section className="overflow-hidden rounded-3xl border border-emerald-300/15 bg-gradient-to-br from-[#0d3a3c] to-[#0b2638] p-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-300/15 text-xl text-emerald-200">
-                ✦
-              </div>
-              <p className="mt-4 text-sm font-black">More rides. More earnings.</p>
-              <p className="mt-2 text-xs leading-5 text-slate-400">
-                Keep your status available to receive nearby requests.
-              </p>
-              <Link
-                href="/support"
-                className="mt-4 inline-flex text-xs font-extrabold text-emerald-200 hover:text-emerald-100"
-              >
-                Driver support <span className="ml-1">↗</span>
-              </Link>
-            </section>
-          </div>
-        </aside>
-
-        <div className="min-w-0 space-y-5 pb-20 lg:pb-4">
+      <div className="relative mx-auto grid w-full max-w-[520px] gap-5 px-3 py-4 sm:px-4 sm:py-5">
+        <div className="min-w-0 space-y-4 pb-24">
           <section className="flex flex-col justify-between gap-4 rounded-3xl border border-white/10 bg-gradient-to-br from-[#0d2b40] via-[#0b2538] to-[#0b3b3a] p-5 shadow-xl shadow-black/10 sm:p-7 md:flex-row md:items-center">
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-emerald-200">
@@ -716,28 +676,23 @@ export default function DriverInstantRidesPage() {
         </div>
       </div>
 
-      <nav aria-label="Driver app navigation" className="fixed inset-x-0 bottom-0 z-[850] border-t border-white/10 bg-[#071827]/95 px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur-xl lg:hidden">
-        <div className="mx-auto grid max-w-xl grid-cols-5 gap-1">
-          {[
-            { label: "Home", href: "/driver/instant-rides", symbol: "⌂" },
-            { label: "Rides", href: "/driver/rides", symbol: "↗" },
-            { label: "Earnings", href: "/driver/earnings", symbol: "₹" },
-            { label: "Profile", href: "/driver/profile", symbol: "◉" },
-            { label: "Support", href: "/support", symbol: "?" },
-          ].map((item, index) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={index === 0 ? "page" : undefined}
-              className={
-                "flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl px-1 " +
-                (index === 0 ? "bg-emerald-300/10 text-emerald-200" : "text-slate-500 hover:text-slate-200")
-              }
-            >
-              <span className="text-xl leading-5">{item.symbol}</span>
-              <span className="text-[10px] font-extrabold">{item.label}</span>
-            </Link>
-          ))}
+      <nav aria-label="Driver app navigation" className="fixed inset-x-0 bottom-0 z-[850] border-t border-white/10 bg-[#071827]/95 px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur-xl">
+        <div className="mx-auto grid w-full max-w-[520px] grid-cols-5 gap-1">
+          <Link href="/driver/instant-rides" aria-current="page" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl bg-emerald-300/10 px-1 text-emerald-200">
+            <span className="text-xl leading-5">⌂</span><span className="text-[10px] font-extrabold">Home</span>
+          </Link>
+          <Link href="/driver/rides" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-slate-100">
+            <span className="text-xl leading-5">↗</span><span className="text-[10px] font-extrabold">My rides</span>
+          </Link>
+          <Link href="/driver/instant-rides" aria-label="New ride" className="flex min-h-[58px] -translate-y-2 flex-col items-center justify-center gap-1 rounded-2xl border border-emerald-200/30 bg-gradient-to-br from-emerald-300 to-emerald-400 px-1 text-[#062033] shadow-lg shadow-emerald-500/20">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-black/5 text-2xl font-black leading-none">＋</span><span className="text-[10px] font-black">New ride</span>
+          </Link>
+          <Link href="/driver/earnings" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-slate-100">
+            <span className="text-xl leading-5">₹</span><span className="text-[10px] font-extrabold">Earnings</span>
+          </Link>
+          <button type="button" onClick={() => setMenuOpen((open) => !open)} aria-label="More options" aria-expanded={menuOpen} className={"flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 transition " + (menuOpen ? "bg-white/10 text-emerald-200" : "text-slate-400 hover:text-slate-100")}>
+            <span className="text-2xl leading-5">⋯</span><span className="text-[10px] font-extrabold">More</span>
+          </button>
         </div>
       </nav>
     </main>
