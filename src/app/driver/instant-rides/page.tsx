@@ -224,3 +224,4 @@ export default function DriverInstantRidesPage() {
       </div>
     </nav>
   </main>;
+}
