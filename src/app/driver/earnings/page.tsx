@@ -9,7 +9,8 @@ type Ride = {
   destination: string;
   vehicle_type: string;
   estimated_fare: number | string | null;
-  updated_at: string;
+  completed_at: string;
+  source: "instant" | "journey";
 };
 
 type EarningsData = {
@@ -89,19 +90,19 @@ export default function DriverEarningsPage() {
 
         <section className="mt-6 grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
           <article className="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm sm:p-7">
-            <div className="flex items-center justify-between gap-3"><div><h2 className="text-xl font-black">Completed ride activity</h2><p className="mt-1 text-sm text-slate-500">Latest 50 completed instant rides</p></div><span className="rounded-full bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700">Live data</span></div>
+            <div className="flex items-center justify-between gap-3"><div><h2 className="text-xl font-black">Completed ride activity</h2><p className="mt-1 text-sm text-slate-500">Latest 50 completed rides and shared journeys</p></div><span className="rounded-full bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700">Live data</span></div>
             {loading ? <p className="mt-6 text-sm text-slate-500">Loading your ride history…</p> : !data?.rides.length ? (
               <div className="mt-5 rounded-2xl border border-dashed border-sky-200 bg-sky-50/70 px-5 py-9 text-center">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm" aria-hidden="true">🛺</div>
                 <h3 className="mt-4 font-extrabold">No completed rides yet</h3>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">When you complete an instant ride, it will appear here with its estimated fare.</p>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">When you complete an instant ride or a passenger booking for one of your journeys, it will appear here with its estimated fare.</p>
               </div>
             ) : (
               <div className="mt-4 divide-y divide-sky-100">
                 {data.rides.map(ride => (
                   <div key={ride.id} className="py-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="min-w-0"><p className="font-bold">{ride.pickup || "Pickup location"} <span className="text-sky-600">→</span> {ride.destination || "Destination"}</p><p className="mt-1 text-xs text-slate-500">{new Date(ride.updated_at).toLocaleString("en-IN")} · {ride.vehicle_type}</p></div>
+                      <div className="min-w-0"><p className="font-bold">{ride.pickup || "Pickup location"} <span className="text-sky-600">→</span> {ride.destination || "Destination"}</p><p className="mt-1 text-xs text-slate-500">{new Date(ride.completed_at).toLocaleString("en-IN")} · {ride.vehicle_type} · {ride.source === "instant" ? "Instant ride" : "Shared journey"}</p></div>
                       <p className="shrink-0 font-black text-slate-800">{money(Number(ride.estimated_fare || 0))}</p>
                     </div>
                   </div>
