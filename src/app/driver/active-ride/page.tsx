@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -26,7 +27,7 @@ const stages = [
   { key: "completed", title: "Trip completed", detail: "This trip has been completed." },
 ];
 
-export default function ActiveRidePage() {
+function ActiveRideContent() {
   const searchParams = useSearchParams();
   const requestedId = searchParams.get("ride") || "";
   const [ride, setRide] = useState<Ride | null>(null);
@@ -154,5 +155,14 @@ export default function ActiveRidePage() {
         </nav>
       </div>
     </main>
+  );
+}
+
+
+export default function ActiveRidePage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-[#071827] px-4 py-8 text-[#edf7f7]"><div className="mx-auto max-w-[520px] rounded-2xl border border-white/10 bg-[#0b2234] p-6 text-sm text-slate-300">Loading active ride…</div></main>}>
+      <ActiveRideContent />
+    </Suspense>
   );
 }
