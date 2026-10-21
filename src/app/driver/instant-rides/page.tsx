@@ -155,7 +155,7 @@ export default function DriverInstantRidesPage() {
   }
 
   const currentVehicle = vehicles.find(v => v.id === presence.vehicle_type)?.label || "Driver";
-  const todayEstimate = earnings ? Math.round(earnings.this_week_estimated_fare / 7).toLocaleString("en-IN") : "—";
+  const weeklyEstimate = earnings ? Math.round(earnings.this_week_estimated_fare).toLocaleString("en-IN") : "—";
   return <main className="relative h-[100dvh] min-h-[600px] w-full overflow-hidden bg-slate-100 text-slate-950">
     <div className="absolute inset-0"><DriverLiveMap location={location} online={presence.is_online} onLocate={() => {
       if (!navigator.geolocation) { setMessage("GPS is not supported by this browser."); return; }
@@ -201,7 +201,7 @@ export default function DriverInstantRidesPage() {
           <span className="text-lg">{switching || locating ? "…" : presence.is_online ? "Ⅱ" : "▶"}</span>{switching ? "Please wait…" : locating ? "Finding your location…" : presence.is_online ? "GO OFFLINE" : "GO ONLINE"}
         </button>
         <div className="mt-3 grid grid-cols-3 divide-x divide-slate-100 rounded-2xl border border-slate-100 bg-slate-50 py-3">
-          <div className="px-2"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Est. today</p><p className="mt-1 text-lg font-black">₹{todayEstimate}</p></div>
+          <div className="px-2"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">This week</p><p className="mt-1 text-lg font-black">₹{weeklyEstimate}</p></div>
           <div className="px-2"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Completed</p><p className="mt-1 text-lg font-black">{earnings?.completed_rides ?? "—"}</p></div>
           <div className="px-2"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Active</p><p className="mt-1 text-lg font-black">{active.length}</p></div>
         </div>
