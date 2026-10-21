@@ -694,9 +694,9 @@ export default function DriverInstantRidesPage() {
           <Link href="/driver/rides" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-slate-100">
             <span className="text-xl leading-5">↗</span><span className="text-[10px] font-extrabold">My rides</span>
           </Link>
-          <a href="#driver-map" aria-label="Map" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-emerald-200">
-            <span className="text-xl leading-5">⌖</span><span className="text-[10px] font-extrabold">Map</span>
-          </a>
+          <Link href="/driver/new-ride-requests" aria-label="New ride requests" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-emerald-200">
+            <span className="text-xl leading-5">＋</span><span className="text-[10px] font-extrabold">New rides</span>
+          </Link>
           <Link href="/driver/earnings" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-slate-100">
             <span className="text-xl leading-5">₹</span><span className="text-[10px] font-extrabold">Earnings</span>
           </Link>
