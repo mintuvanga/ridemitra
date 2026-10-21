@@ -53,7 +53,7 @@ export async function PATCH(request: NextRequest, context: Context) {
     }
     const result = await sql.begin(async (tx) => {
       const rows = await tx`
-        select b.id, b.status, b.trip_id, b.seats_requested, t.driver_id, t.seats_available
+        select b.id, b.status, b.trip_id, b.seats_requested, t.driver_id, t.seats_available, t.departure_at, t.status as trip_status
         from public.bookings b join public.trips t on t.id = b.trip_id
         where b.id = ${id} for update of b, t
       `;
@@ -61,6 +61,9 @@ export async function PATCH(request: NextRequest, context: Context) {
       if (!booking || booking.driver_id !== user.id) throw new Error("RIDE_NOT_FOUND");
       if (action === "accept") {
         if (booking.status !== "pending") throw new Error("RIDE_NOT_PENDING");
+        if (booking.trip_status === "cancelled" || booking.trip_status === "completed" || new Date(booking.departure_at).getTime() <= Date.now()) {
+          throw new Error("TRIP_DEPARTED");
+        }
         if (Number(booking.seats_available) < Number(booking.seats_requested)) throw new Error("NO_SEATS");
         await tx`update public.bookings set status = 'confirmed' where id = ${id}`;
         await tx`update public.trips set seats_available = seats_available - ${booking.seats_requested}, status = case when seats_available - ${booking.seats_requested} <= 0 then 'full' else status end where id = ${booking.trip_id}`;
@@ -80,6 +83,7 @@ export async function PATCH(request: NextRequest, context: Context) {
       RIDE_NOT_FOUND: { status: 404, error: "Ride request not found." },
       RIDE_NOT_PENDING: { status: 409, error: "This ride request is no longer pending." },
       NO_SEATS: { status: 409, error: "There are not enough seats available." },
+      TRIP_DEPARTED: { status: 409, error: "This journey has already departed or is no longer available." },
       RIDE_NOT_CONFIRMED: { status: 409, error: "Only an accepted ride can be completed." },
       AUTH_REQUIRED: { status: 401, error: "Sign in to update this ride." },
     };
