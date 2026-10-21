@@ -15,6 +15,7 @@ const requiredDocs = [
 export default function DriverDocumentsPage() {
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [message, setMessage] = useState("");
+  const [verificationStatus, setVerificationStatus] = useState("loading");
   const [busy, setBusy] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -28,6 +29,27 @@ export default function DriverDocumentsPage() {
   const checkingRef = useRef(false);
   const goodFramesRef = useRef(0);
   const selectedCount = requiredDocs.filter(doc => files[doc.key]).length;
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadStatus() {
+      try {
+        const response = await fetch("/api/driver/onboarding", { cache: "no-store" });
+        const data = await response.json();
+        if (cancelled) return;
+        if (response.status === 401) {
+          setVerificationStatus("signed_out");
+          return;
+        }
+        if (!response.ok) throw new Error("Unable to load verification status.");
+        setVerificationStatus(data.verification?.status || "not_submitted");
+      } catch {
+        if (!cancelled) setVerificationStatus("not_submitted");
+      }
+    }
+    void loadStatus();
+    return () => { cancelled = true; };
+  }, []);
 
   function stopCamera() {
     streamRef.current?.getTracks().forEach(track => track.stop());
@@ -252,6 +274,7 @@ export default function DriverDocumentsPage() {
       const response = await fetch("/api/driver/documents", { method: "POST", body: formData });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Secure document submission is not ready yet.");
+      setVerificationStatus(result.status || "pending");
       setMessage(result.message || "Your documents were received for review.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to submit documents.");
@@ -281,6 +304,16 @@ export default function DriverDocumentsPage() {
             <div className="rounded-2xl border border-slate-700 bg-slate-800/70 p-3"><div className="flex items-center gap-2 text-sm font-extrabold text-slate-200"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-600 text-white">2</span> Documents</div><p className="mt-2 text-xs text-slate-300">Licence, RC and insurance details</p></div>
           </div>
           <div className="mt-5 rounded-2xl border border-slate-600 bg-emerald-950/40 p-4 text-sm leading-6 text-sky-950"><strong>Private submission:</strong> Files are uploaded to restricted Cloudflare R2 storage and queued for manual administrator review. Each file must be 10 MB or smaller; total upload limit is 25 MB. Face-position checks do not prove identity or liveness. Your account remains unapproved until review is complete.</div>
+          <div className="mt-5 rounded-2xl border border-slate-700 bg-slate-800/60 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-bold text-slate-300">Current verification status</span>
+              <span className={"rounded-full px-3 py-1 text-xs font-extrabold " + (verificationStatus === "approved" ? "bg-emerald-900 text-emerald-200" : verificationStatus === "pending" ? "bg-amber-900/60 text-amber-200" : verificationStatus === "rejected" ? "bg-rose-900/60 text-rose-200" : "bg-slate-700 text-slate-200")}>{verificationStatus === "loading" ? "Loading…" : verificationStatus === "signed_out" ? "Sign in required" : verificationStatus === "not_submitted" ? "Not submitted" : verificationStatus === "pending" ? "Under review" : verificationStatus === "approved" ? "Approved" : verificationStatus === "rejected" ? "Changes requested" : verificationStatus.replace(/_/g, " ")}</span>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-slate-400">Submitted documents are stored privately and reviewed by an administrator.</p>
+          </div>
+          {verificationStatus === "pending" && <p role="status" className="mt-4 rounded-xl border border-amber-700 bg-amber-950/40 p-4 text-sm text-amber-100">Your documents are already submitted and waiting for review. You do not need to upload them again.</p>}
+          {verificationStatus === "approved" && <p role="status" className="mt-4 rounded-xl border border-emerald-700 bg-emerald-950/40 p-4 text-sm text-emerald-100">Your documents are approved. Contact support if you need changes.</p>}
+          {verificationStatus === "signed_out" && <p className="mt-4 rounded-xl border border-amber-700 bg-amber-950/40 p-4 text-sm text-amber-100">Please <Link className="font-bold underline" href="/driver/login">sign in</Link> before uploading documents.</p>}
           <form onSubmit={submit} className="mt-6 space-y-4">
             {requiredDocs.map((doc, index) => (
               <div key={doc.key} className="block rounded-2xl border border-slate-700 p-4 transition hover:border-emerald-400">
@@ -326,7 +359,7 @@ export default function DriverDocumentsPage() {
             )}
             <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
             <div className="rounded-xl bg-slate-800/70 p-3 text-sm text-slate-300">{selectedCount} of 4 required files selected</div>
-            <button disabled={busy} type="submit" className="w-full rounded-xl bg-emerald-500 px-4 py-3.5 font-bold text-white shadow-lg shadow-black/20 transition hover:bg-emerald-400 disabled:opacity-60">{busy ? "Uploading securely…" : "Submit documents for verification"}</button>
+            <button disabled={busy || verificationStatus === "pending" || verificationStatus === "approved" || verificationStatus === "signed_out"} type="submit" className="w-full rounded-xl bg-emerald-500 px-4 py-3.5 font-bold text-white shadow-lg shadow-black/20 transition hover:bg-emerald-400 disabled:opacity-60">{busy ? "Uploading securely…" : "Submit documents for verification"}</button>
             {message && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">{message}</p>}
           </form>
           <p className="mt-5 text-xs leading-5 text-slate-400">Your identity documents are sensitive personal information. We will only accept them once secure storage, restricted access, retention rules, and verification checks are in place.</p>
