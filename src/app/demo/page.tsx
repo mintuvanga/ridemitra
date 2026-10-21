@@ -1,14 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DemoMenu from "@/components/demo/DemoMenu";
 
 const cash = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
 export default function DemoDriverPage() {
   const [online, setOnline] = useState(false);
-  const [vehicle, setVehicle] = useState("Bike");
+  const [vehicle, setVehicle] = useState("Not selected");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("ridemitra_demo_onboarding");
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (typeof data.vehicle === "string" && data.vehicle) setVehicle(data.vehicle);
+      }
+    } catch {}
+  }, []);
 
   const shortcuts = [
     ["Incoming requests", "/demo/rides/request", "Review pickup, destination and sample fare"],
@@ -38,9 +48,12 @@ export default function DemoDriverPage() {
               <span className={"h-3 w-3 rounded-full " + (online ? "bg-emerald-500" : "bg-slate-400")} />
               <div className="flex-1"><p className="font-extrabold">{online ? "You're online · Demo" : "You're offline"}</p><p className="mt-0.5 text-sm text-slate-600">{online ? "Sample availability is enabled on this page." : "Go online when you are ready to receive rides."}</p></div>
             </div>
-            <label className="mt-5 block text-sm font-bold text-slate-700">Vehicle type
-              <select value={vehicle} onChange={(e) => setVehicle(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 sm:max-w-xs"><option>Bike</option><option>Auto</option><option>Cab</option></select>
-            </label>
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:max-w-md">
+              <p className="text-xs font-extrabold uppercase tracking-wider text-slate-500">Registered vehicle</p>
+              <p className="mt-1 text-lg font-black">{vehicle === "Not selected" ? "Choose during onboarding" : vehicle}</p>
+              <p className="mt-1 text-sm text-slate-600">{vehicle === "Not selected" ? "Select your vehicle type before submitting your driver application." : "Vehicle choice comes from the demo onboarding flow."}</p>
+              <Link href="/demo/onboarding" className="mt-3 inline-flex rounded-xl border border-sky-200 bg-white px-4 py-2.5 text-sm font-extrabold text-sky-800 hover:bg-sky-50">{vehicle === "Not selected" ? "Start driver onboarding →" : "View onboarding details →"}</Link>
+            </div>
             <button type="button" onClick={() => setOnline(v => !v)} className={"mt-4 w-full rounded-2xl px-5 py-4 text-base font-black text-white shadow-sm transition sm:max-w-xs " + (online ? "bg-rose-600 hover:bg-rose-700" : "bg-emerald-600 hover:bg-emerald-700")}>{online ? "Go Offline" : "Go Online"} <span className="ml-1 text-xs font-bold opacity-90">· Demo</span></button>
             <p className="mt-3 text-xs text-slate-500">This toggle is a visual simulation only. It does not change real dispatch availability or use your location.</p>
           </article>
@@ -49,7 +62,7 @@ export default function DemoDriverPage() {
             <p className="text-sm font-bold text-sky-100">Today's overview</p>
             <h2 className="mt-2 text-2xl font-black">Your activity at a glance</h2>
             <div className="mt-6 grid grid-cols-2 gap-3">
-              {[["Requests", "2"], ["Completed", "0"], ["Today's earnings", cash(0)], ["Vehicle", vehicle]].map(([label, value]) => <div key={label} className="rounded-2xl border border-white/15 bg-white/10 p-4"><p className="text-xs font-semibold text-sky-100">{label}</p><p className="mt-2 text-xl font-black">{value}</p></div>)}
+              {[["Requests", "2"], ["Completed", "0"], ["Today's earnings", cash(0)], ["Registered vehicle", vehicle]].map(([label, value]) => <div key={label} className="rounded-2xl border border-white/15 bg-white/10 p-4"><p className="text-xs font-semibold text-sky-100">{label}</p><p className="mt-2 text-xl font-black">{value}</p></div>)}
             </div>
             <Link href="/demo/earnings" className="mt-5 inline-flex rounded-xl bg-white px-4 py-3 text-sm font-extrabold text-sky-800 hover:bg-sky-50">View earnings →</Link>
           </article>
