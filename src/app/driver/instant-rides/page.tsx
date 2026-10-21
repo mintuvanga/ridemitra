@@ -541,7 +541,7 @@ export default function DriverInstantRidesPage() {
             ))}
           </section>
 
-          <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(330px,0.85fr)]">
+          <section className="grid min-w-0 grid-cols-1 gap-5">
             <article id="driver-map" className="min-w-0 scroll-mt-20 overflow-hidden rounded-3xl border border-white/10 bg-[#0b2234] shadow-xl shadow-black/10">
               <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-3 pt-5 sm:px-5">
                 <div>
@@ -561,7 +561,7 @@ export default function DriverInstantRidesPage() {
                   {presence.is_online ? "● GPS LIVE" : "○ OFFLINE"}
                 </span>
               </div>
-              <div className="h-[280px] overflow-hidden px-3 pb-3 sm:h-[340px] sm:px-4 sm:pb-4">
+              <div className="h-[420px] overflow-hidden px-3 pb-3 sm:h-[520px] sm:px-4 sm:pb-4">
                 <div className="h-full overflow-hidden rounded-2xl border border-white/10">
                   <DriverLiveMap
                     location={location}
@@ -587,112 +587,21 @@ export default function DriverInstantRidesPage() {
               </div>
             </article>
 
-            <article id="new-ride-requests" className="min-w-0 rounded-3xl border border-white/10 bg-[#0b2234] p-4 shadow-xl shadow-black/10 sm:p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-base font-black sm:text-lg">New ride requests</h2>
-                  <p className="mt-1 text-xs text-slate-400">
-                    Requests matched to your selected vehicle
-                  </p>
-                  <Link href="/driver/new-ride-requests" className="mt-2 inline-flex text-xs font-extrabold text-emerald-200 hover:text-emerald-100">Open new ride requests →</Link>
-                </div>
-                <span className="flex h-8 min-w-8 items-center justify-center rounded-xl bg-emerald-300/10 px-2 text-sm font-black text-emerald-200">
-                  {requests.length}
-                </span>
-              </div>
-
-              {!presence.is_online ? (
-                <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
-                  <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 text-2xl text-slate-400">
-                    ◷
-                  </span>
-                  <p className="mt-3 text-sm font-extrabold">You’re currently offline</p>
-                  <p className="mx-auto mt-1 max-w-xs text-xs leading-5 text-slate-400">
-                    Go online to receive ride requests near your location.
-                  </p>
-                </div>
-              ) : requestCards.length === 0 ? (
-                <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
-                  <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-300/10 text-2xl text-emerald-200">
-                    ⌁
-                  </span>
-                  <p className="mt-3 text-sm font-extrabold">
-                    {loading ? "Checking for requests…" : "Waiting for your next ride"}
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-slate-400">
-                    New matching requests refresh automatically.
-                  </p>
-                </div>
-              ) : (
-                <div className="mt-4 space-y-3">
-                  {requestCards.map((ride) => (
-                    <div
-                      key={ride.id}
-                      className="rounded-2xl border border-white/10 bg-[#102b3e] p-3 sm:p-4"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-[10px] font-extrabold uppercase tracking-wide text-emerald-200">
-                            {Number(ride.pickup_distance_km || 0).toFixed(1)} km away · {currentVehicle}
-                          </p>
-                          <p className="mt-1 truncate text-sm font-black">{ride.passenger_name || "Ride customer"}</p>
-                        </div>
-                        <p className="shrink-0 text-lg font-black text-emerald-200">
-                          {money(Number(ride.estimated_fare || 0))}
-                        </p>
-                      </div>
-                      <div className="mt-3 space-y-2 text-xs leading-5 text-slate-300">
-                        <p className="flex gap-2"><span className="text-emerald-300">●</span><span className="min-w-0"><b className="text-slate-100">Pickup</b> · {ride.pickup}</span></p>
-                        <p className="flex gap-2"><span className="text-rose-300">●</span><span className="min-w-0"><b className="text-slate-100">Drop</b> · {ride.destination}</span></p>
-                      </div>
-                      <div className="mt-3 grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          disabled={busy === ride.id}
-                          onClick={() => void act(ride, "reject")}
-                          className="min-h-10 rounded-xl border border-white/10 bg-white/5 px-2 text-xs font-extrabold text-slate-300 hover:bg-white/10 disabled:opacity-50"
-                        >
-                          Decline
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busy === ride.id}
-                          onClick={() => void act(ride, "accept")}
-                          className="min-h-10 rounded-xl bg-emerald-300 px-2 text-xs font-black text-[#062033] hover:bg-emerald-200 disabled:opacity-50"
-                        >
-                          {busy === ride.id ? "Please wait…" : "Accept ride"}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  {requests.length > 3 && (
-                    <p className="text-center text-xs text-slate-400">
-                      +{requests.length - 3} more requests are available.
-                    </p>
-                  )}
-                </div>
-              )}
-              <div className="mt-4 border-t border-white/10 pt-4">
-                <Link
-                  href="/driver/notifications"
-                  className="flex items-center justify-between text-xs font-extrabold text-emerald-200 hover:text-emerald-100"
-                >
-                  View all ride activity <span>↗</span>
-                </Link>
-              </div>
-            </article>
           </section>
 
         </div>
       </div>
 
       <nav aria-label="Driver app navigation" className="fixed inset-x-0 bottom-0 z-[850] border-t border-white/10 bg-[#071827]/95 px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur-xl">
-        <div className="mx-auto grid w-full max-w-[520px] grid-cols-5 gap-1">
+        <div className="mx-auto grid w-full max-w-[520px] grid-cols-6 gap-1">
           <Link href="/driver/instant-rides" aria-current="page" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl bg-emerald-300/10 px-1 text-emerald-200">
             <span className="text-xl leading-5">⌂</span><span className="text-[10px] font-extrabold">Home</span>
           </Link>
           <Link href="/driver/rides" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-slate-100">
             <span className="text-xl leading-5">↗</span><span className="text-[10px] font-extrabold">My rides</span>
+          </Link>
+          <Link href="#driver-map" onClick={(event) => { event.preventDefault(); document.getElementById("driver-map")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} aria-label="Maps" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-emerald-200">
+            <span className="text-xl leading-5">⌖</span><span className="text-[10px] font-extrabold">Maps</span>
           </Link>
           <Link href="/driver/new-ride-requests" aria-label="New ride requests" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-emerald-200">
             <span className="text-xl leading-5">＋</span><span className="text-[10px] font-extrabold">New rides</span>
