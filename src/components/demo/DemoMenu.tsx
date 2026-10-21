@@ -8,6 +8,7 @@ const links = [
   ["Instant rides", "/demo/instant-rides", "Requests and ride lifecycle"],
   ["All rides", "/demo/rides", "Upcoming and past ride examples"],
   ["Incoming request", "/demo/rides/request", "Try accept or reject"],
+  ["Active ride", "/demo/active-ride", "Arrival, start and completion stages"],
   ["Ride history", "/demo/history", "Fictional completed rides"],
   ["Shared journeys", "/demo/trips", "Routes, seats and sample prices"],
   ["Documents & verification", "/demo/documents", "Onboarding checklist preview"],
