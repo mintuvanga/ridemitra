@@ -4,54 +4,108 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const DriverLiveMap = dynamic(() => import("./DriverLiveMap"), { ssr: false, loading: () => <div className="h-full min-h-[420px] animate-pulse bg-slate-100" /> });
-type Ride = { id: string; pickup: string; destination: string; vehicle_type: string; estimated_fare: number; status: string; passenger_name: string; pickup_distance_km?: number };
-type Presence = { is_online: boolean; vehicle_type: "motorcycle" | "auto" | "car"; latitude?: number | null; longitude?: number | null };
-const vehicles = [{ id: "motorcycle", label: "Bike" }, { id: "auto", label: "Auto" }, { id: "car", label: "Cab" }];
-const statusNames: Record<string, string> = { accepted: "Accepted", arriving: "Arriving at pickup", in_progress: "Ride in progress", completed: "Completed" };
+const DriverLiveMap = dynamic(() => import("./DriverLiveMap"), {
+  ssr: false,
+  loading: () => <div className="h-full min-h-[280px] animate-pulse rounded-2xl bg-[#102b3e]" />,
+});
+
+type Ride = {
+  id: string;
+  pickup: string;
+  destination: string;
+  vehicle_type: string;
+  estimated_fare: number;
+  status: string;
+  passenger_name: string;
+  pickup_distance_km?: number;
+};
+type Presence = {
+  is_online: boolean;
+  vehicle_type: "motorcycle" | "auto" | "car";
+  latitude?: number | null;
+  longitude?: number | null;
+};
+
+const vehicles = [
+  { id: "motorcycle", label: "Bike" },
+  { id: "auto", label: "Auto" },
+  { id: "car", label: "Cab" },
+];
+const statusNames: Record<string, string> = {
+  accepted: "Accepted",
+  arriving: "Arriving at pickup",
+  in_progress: "Ride in progress",
+  completed: "Completed",
+};
+
+const money = (value: number) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(Number.isFinite(value) ? value : 0);
 
 export default function DriverInstantRidesPage() {
-  const [presence, setPresence] = useState<Presence>({ is_online: false, vehicle_type: "motorcycle" });
+  const [presence, setPresence] = useState<Presence>({
+    is_online: false,
+    vehicle_type: "motorcycle",
+  });
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
-  const [locationStatus, setLocationStatus] = useState("Allow location access to show your live position.");
+  const [locationStatus, setLocationStatus] = useState(
+    "Allow location access to show your live position.",
+  );
   const [locating, setLocating] = useState(false);
   const [requests, setRequests] = useState<Ride[]>([]);
   const [active, setActive] = useState<Ride[]>([]);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState("");
   const [loading, setLoading] = useState(true);
-  const [sheet, setSheet] = useState<"requests" | "active" | null>(null);
   const [switching, setSwitching] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [earnings, setEarnings] = useState<{ total_estimated_fare: number; this_week_estimated_fare: number; completed_rides: number } | null>(null);
+  const [earnings, setEarnings] = useState<{
+    total_estimated_fare: number;
+    this_week_estimated_fare: number;
+    completed_rides: number;
+  } | null>(null);
   const watchId = useRef<number | null>(null);
-  const onlineRef = useRef(false);
 
   const load = useCallback(async () => {
     try {
       const [presenceResponse, ridesResponse] = await Promise.all([
         fetch("/api/driver/presence", { cache: "no-store" }),
-        fetch("/api/driver/instant-rides", { cache: "no-store" })
+        fetch("/api/driver/instant-rides", { cache: "no-store" }),
       ]);
       const p = await presenceResponse.json();
       const r = await ridesResponse.json();
       if (presenceResponse.ok && p.presence) {
         setPresence(p.presence);
-        onlineRef.current = p.presence.is_online;
         if (p.presence.latitude != null && p.presence.longitude != null) {
-          setLocation({ lat: Number(p.presence.latitude), lon: Number(p.presence.longitude) });
+          setLocation({
+            lat: Number(p.presence.latitude),
+            lon: Number(p.presence.longitude),
+          });
           setLocationStatus("Your latest GPS position is on the map.");
         }
       }
       if (ridesResponse.ok) {
         setRequests(r.requests || []);
         setActive(r.active || []);
-      } else setMessage(r.error || "Sign in to use driver mode.");
-    } catch { setMessage("Could not refresh driver details. Check your connection."); }
-    finally { setLoading(false); }
+        setMessage("");
+      } else {
+        setMessage(r.error || "Sign in to use driver mode.");
+      }
+    } catch {
+      setMessage("Could not refresh driver details. Check your connection.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { void load(); const timer = window.setInterval(() => void load(), 5000); return () => window.clearInterval(timer); }, [load]);
+  useEffect(() => {
+    void load();
+    const timer = window.setInterval(() => void load(), 5000);
+    return () => window.clearInterval(timer);
+  }, [load]);
 
   useEffect(() => {
     let alive = true;
@@ -60,41 +114,75 @@ export default function DriverInstantRidesPage() {
         const response = await fetch("/api/driver/earnings", { cache: "no-store" });
         const result = await response.json();
         if (alive && response.ok && result.summary) setEarnings(result.summary);
-      } catch { /* Earnings remain unavailable until the API responds. */ }
+      } catch {
+        // Keep the summary in an unavailable state until the API responds.
+      }
     };
     void refreshEarnings();
     const timer = window.setInterval(() => void refreshEarnings(), 30000);
-    return () => { alive = false; window.clearInterval(timer); };
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+    };
   }, []);
 
   const stopWatching = useCallback(() => {
-    if (watchId.current !== null && typeof navigator !== "undefined" && navigator.geolocation) navigator.geolocation.clearWatch(watchId.current);
+    if (
+      watchId.current !== null &&
+      typeof navigator !== "undefined" &&
+      navigator.geolocation
+    ) {
+      navigator.geolocation.clearWatch(watchId.current);
+    }
     watchId.current = null;
   }, []);
 
-  const startWatching = useCallback((vehicle: Presence["vehicle_type"]) => {
-    if (!navigator.geolocation) { setLocationStatus("This browser does not support GPS location."); return; }
-    stopWatching();
-    setLocationStatus("Waiting for GPS signal…");
-    watchId.current = navigator.geolocation.watchPosition(async pos => {
-      const next = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-      setLocation(next);
-      setLocationStatus("Live GPS position updating on the map.");
-      try {
-        const response = await fetch("/api/driver/presence", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ is_online: true, vehicle_type: vehicle, latitude: next.lat, longitude: next.lon })
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Could not share GPS.");
-        setPresence(data.presence);
-      } catch (error) { setMessage(error instanceof Error ? error.message : "GPS update failed."); }
-    }, error => {
-      const text = error.code === 1 ? "Location permission denied. Allow location for this site in your browser settings." : error.code === 2 ? "GPS location is unavailable. Turn on device location and try again." : "GPS is taking too long. Check location settings and retry.";
-      setLocationStatus(text);
-      setMessage(text);
-    }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 });
-  }, [stopWatching]);
+  const startWatching = useCallback(
+    (vehicle: Presence["vehicle_type"]) => {
+      if (!navigator.geolocation) {
+        setLocationStatus("This browser does not support GPS location.");
+        return;
+      }
+      stopWatching();
+      setLocationStatus("Waiting for GPS signal…");
+      watchId.current = navigator.geolocation.watchPosition(
+        async (pos) => {
+          const next = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+          setLocation(next);
+          setLocationStatus("Live GPS position updating on the map.");
+          try {
+            const response = await fetch("/api/driver/presence", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                is_online: true,
+                vehicle_type: vehicle,
+                latitude: next.lat,
+                longitude: next.lon,
+              }),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Could not share GPS.");
+            setPresence(data.presence);
+          } catch (error) {
+            setMessage(error instanceof Error ? error.message : "GPS update failed.");
+          }
+        },
+        (error) => {
+          const text =
+            error.code === 1
+              ? "Location permission denied. Allow location for this site in browser settings."
+              : error.code === 2
+                ? "GPS location is unavailable. Turn on device location and try again."
+                : "GPS is taking too long. Check location settings and retry.";
+          setLocationStatus(text);
+          setMessage(text);
+        },
+        { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 },
+      );
+    },
+    [stopWatching],
+  );
 
   useEffect(() => {
     if (presence.is_online) startWatching(presence.vehicle_type);
@@ -104,124 +192,644 @@ export default function DriverInstantRidesPage() {
 
   async function toggleOnline() {
     if (switching) return;
-    setSwitching(true); setMessage("");
+    setSwitching(true);
+    setMessage("");
+
     if (presence.is_online) {
       stopWatching();
       try {
-        const response = await fetch("/api/driver/presence", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ is_online: false, vehicle_type: presence.vehicle_type }) });
+        const response = await fetch("/api/driver/presence", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            is_online: false,
+            vehicle_type: presence.vehicle_type,
+          }),
+        });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Unable to go offline.");
-        setPresence(data.presence); onlineRef.current = false;
+        setPresence(data.presence);
         setLocationStatus("You are offline. Your last location is not live.");
         setMessage("You are now offline.");
-      } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to go offline."); }
-      finally { setSwitching(false); }
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Unable to go offline.");
+      } finally {
+        setSwitching(false);
+      }
       return;
     }
-    if (!navigator.geolocation) { setMessage("This browser does not support GPS."); setSwitching(false); return; }
-    setLocating(true); setLocationStatus("Getting your GPS location before going online…");
-    navigator.geolocation.getCurrentPosition(async pos => {
-      const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-      try {
-        const response = await fetch("/api/driver/presence", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ is_online: true, vehicle_type: presence.vehicle_type, latitude: coords.lat, longitude: coords.lon }) });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Unable to go online.");
-        setLocation(coords); setPresence(data.presence); onlineRef.current = true;
-        setLocationStatus("Live GPS active. Your map will follow your position.");
-        setMessage("You're online. Your live map is ready.");
-        startWatching(presence.vehicle_type);
-      } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to go online."); setLocationStatus("Could not start GPS sharing."); }
-      finally { setLocating(false); setSwitching(false); }
-    }, error => {
-      const text = error.code === 1 ? "Location permission denied. Allow location for this website, then try again." : "Could not get GPS. Turn on device location and retry.";
-      setMessage(text); setLocationStatus(text); setLocating(false); setSwitching(false);
-    }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 3000 });
+
+    if (!navigator.geolocation) {
+      setMessage("This browser does not support GPS.");
+      setSwitching(false);
+      return;
+    }
+    setLocating(true);
+    setLocationStatus("Getting your GPS location before going online…");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        try {
+          const response = await fetch("/api/driver/presence", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              is_online: true,
+              vehicle_type: presence.vehicle_type,
+              latitude: coords.lat,
+              longitude: coords.lon,
+            }),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "Unable to go online.");
+          setLocation(coords);
+          setPresence(data.presence);
+          setLocationStatus("Live GPS active. Your map will follow your position.");
+          setMessage("You're online. You're ready to receive nearby trips.");
+        } catch (error) {
+          setMessage(error instanceof Error ? error.message : "Unable to go online.");
+          setLocationStatus("Could not start GPS sharing.");
+        } finally {
+          setLocating(false);
+          setSwitching(false);
+        }
+      },
+      (error) => {
+        const text =
+          error.code === 1
+            ? "Location permission denied. Allow location for this website, then try again."
+            : "Could not get GPS. Turn on device location and retry.";
+        setMessage(text);
+        setLocationStatus(text);
+        setLocating(false);
+        setSwitching(false);
+      },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 3000 },
+    );
   }
 
   async function act(ride: Ride, action: string) {
-    setBusy(ride.id); setMessage("");
+    setBusy(ride.id);
+    setMessage("");
     try {
-      const response = await fetch("/api/driver/instant-rides", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ride_id: ride.id, action }) });
+      const response = await fetch("/api/driver/instant-rides", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ride_id: ride.id, action }),
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to update ride.");
-      setMessage("Ride updated: " + (statusNames[data.ride?.status] || data.ride?.status || "success"));
+      setMessage(
+        "Ride updated: " +
+          (statusNames[data.ride?.status] || data.ride?.status || "success"),
+      );
       await load();
       if (["accept", "arriving", "start"].includes(action)) {
         const destination = action === "start" ? ride.destination : ride.pickup;
-        window.open("https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(destination) + "&travelmode=driving", "_blank", "noopener,noreferrer");
+        window.open(
+          "https://www.google.com/maps/dir/?api=1&destination=" +
+            encodeURIComponent(destination) +
+            "&travelmode=driving",
+          "_blank",
+          "noopener,noreferrer",
+        );
       }
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to update ride."); }
-    finally { setBusy(""); }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to update ride.");
+    } finally {
+      setBusy("");
+    }
   }
 
-  const currentVehicle = vehicles.find(v => v.id === presence.vehicle_type)?.label || "Driver";
-  const weeklyEstimate = earnings ? Math.round(earnings.this_week_estimated_fare).toLocaleString("en-IN") : "—";
-  return <main className="relative h-[100dvh] min-h-[100svh] w-full overflow-hidden bg-slate-100 text-slate-950">
-    <div className="absolute inset-0"><DriverLiveMap location={location} online={presence.is_online} onLocate={() => {
-      if (!navigator.geolocation) { setMessage("GPS is not supported by this browser."); return; }
-      setLocating(true);
-      navigator.geolocation.getCurrentPosition(pos => { const next = { lat: pos.coords.latitude, lon: pos.coords.longitude }; setLocation(next); setLocationStatus("Map centered on your current location."); setLocating(false); }, err => { setLocationStatus(err.code === 1 ? "Location permission denied. Allow location for this website." : "Unable to get GPS location."); setLocating(false); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 });
-    }} locating={locating} status={locationStatus} /></div>
+  function centerOnLocation() {
+    if (!navigator.geolocation) {
+      setMessage("GPS is not supported by this browser.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        setLocationStatus("Map centered on your current location.");
+        setLocating(false);
+      },
+      (error) => {
+        setLocationStatus(
+          error.code === 1
+            ? "Location permission denied. Allow location for this website."
+            : "Unable to get GPS location.",
+        );
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 },
+    );
+  }
 
-    <header className="absolute inset-x-0 top-0 z-[600] flex items-center justify-between gap-3 bg-white/95 px-4 pb-3 pt-[max(12px,env(safe-area-inset-top))] shadow-sm backdrop-blur-md sm:px-6 sm:py-4">
-      <Link href="/driver/instant-rides" className="flex min-w-0 items-center gap-3" aria-label="RideMitra driver home">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-xl font-black text-white">R</span>
-        <span className="min-w-0"><span className="block text-base font-black tracking-tight">RideMitra</span><span className="mt-0.5 flex items-center gap-1.5 text-xs font-semibold text-slate-500"><span className={"h-2 w-2 rounded-full " + (presence.is_online ? "bg-emerald-500" : "bg-slate-400")} />Captain mode · {presence.is_online ? "Online" : "Offline"}</span></span>
-      </Link>
-      <div className="flex items-center gap-2">
-        <Link href="/driver/notifications" aria-label="Ride activity" className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-lg text-slate-700">♧{requests.length > 0 && <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white" />}</Link>
-        <button type="button" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open driver menu" aria-expanded={menuOpen} className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-xl font-bold text-slate-700">{menuOpen ? "×" : "☰"}</button>
+  const currentVehicle =
+    vehicles.find((vehicle) => vehicle.id === presence.vehicle_type)?.label || "Driver";
+  const totalEstimate =
+    earnings == null ? "—" : money(Math.round(earnings.total_estimated_fare));
+  const weeklyEstimate =
+    earnings == null ? "—" : money(Math.round(earnings.this_week_estimated_fare));
+
+  const navigation = [
+    { label: "Home", href: "/driver/instant-rides", symbol: "⌂" },
+    { label: "My rides", href: "/driver/rides", symbol: "↗" },
+    { label: "Earnings", href: "/driver/earnings", symbol: "₹" },
+    { label: "Ride activity", href: "/driver/notifications", symbol: "◷" },
+    { label: "Profile", href: "/driver/profile", symbol: "◉" },
+    { label: "Vehicle & documents", href: "/driver/onboarding", symbol: "▣" },
+    { label: "Help & support", href: "/support", symbol: "?" },
+  ];
+
+  const requestCards = requests.slice(0, 3);
+
+  return (
+    <main className="min-h-screen bg-[#071827] text-[#edf7f7]">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute -right-36 -top-40 h-[420px] w-[420px] rounded-full bg-emerald-400/10 blur-[110px]" />
+        <div className="absolute -bottom-48 left-1/4 h-[400px] w-[500px] rounded-full bg-cyan-500/5 blur-[120px]" />
       </div>
-    </header>
 
-    {menuOpen && <nav className="absolute right-3 top-[76px] z-[750] w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:right-6">
-      <div className="border-b border-slate-100 bg-sky-50 p-4"><p className="font-black">Captain menu</p><p className="mt-1 text-xs text-slate-500">Your RideMitra account</p></div>
-      {[[ "My rides", "/driver/rides" ],[ "Earnings", "/driver/earnings" ],[ "Ride activity", "/driver/notifications" ],[ "Vehicle & documents", "/driver/onboarding" ],[ "My profile", "/driver/profile" ],[ "Help & support", "/support" ]].map(([label,href]) => <Link key={href} href={href} onClick={() => setMenuOpen(false)} className="block border-b border-slate-100 px-4 py-3 text-sm font-bold text-slate-700 last:border-0 hover:bg-sky-50">{label}<span className="float-right text-slate-400">›</span></Link>)}
-    </nav>}
+      <header className="sticky top-0 z-[800] border-b border-white/10 bg-[#071827]/95 px-4 py-3 backdrop-blur-xl sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-3">
+          <Link href="/driver/instant-rides" className="flex min-w-0 items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-300 to-emerald-500 text-2xl font-black text-[#062033] shadow-lg shadow-emerald-500/15">
+              R
+            </span>
+            <span className="min-w-0">
+              <span className="block text-lg font-black tracking-tight">
+                Ride<span className="text-emerald-300">Mitra</span>
+              </span>
+              <span className="block text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">
+                Driver partner · Drive · Earn · Grow
+              </span>
+            </span>
+          </Link>
 
-    <div className="absolute left-3 right-3 top-[76px] z-[500] flex justify-between gap-2 sm:left-6 sm:right-6 sm:top-[88px]">
-      <div className="rounded-xl border border-white/80 bg-white/95 px-3 py-2 shadow-md backdrop-blur"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Vehicle</p><p className="text-sm font-extrabold">{currentVehicle}</p></div>
-      <button onClick={() => { setSheet(sheet === "requests" ? null : "requests"); setMenuOpen(false); }} className="flex items-center gap-2 rounded-xl border border-white/80 bg-white/95 px-3 py-2 text-left shadow-md backdrop-blur"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sm font-black text-sky-700">{requests.length}</span><span><span className="block text-xs font-extrabold">Ride requests</span><span className="block text-[10px] text-slate-500">Nearby trips</span></span></button>
-    </div>
-
-    {sheet && <section className="absolute inset-x-2 top-[132px] bottom-[calc(72px+env(safe-area-inset-bottom))] z-[700] overflow-y-auto overscroll-contain rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl sm:inset-x-auto sm:top-auto sm:bottom-8 sm:right-6 sm:w-[420px] sm:max-h-[60dvh]">
-      <div className="mb-3 flex items-center justify-between"><div><h2 className="text-lg font-black">{sheet === "requests" ? "Ride requests" : "Active rides"}</h2><p className="text-xs text-slate-500">{sheet === "requests" ? requests.length + " available" : active.length + " ongoing"}</p></div><button onClick={() => setSheet(null)} className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 font-bold" aria-label="Close ride panel">✕</button></div>
-      {sheet === "requests" && (!presence.is_online ? <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Go online to receive matching ride requests.</p> : requests.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">{loading ? "Loading requests…" : "No matching requests yet. New requests refresh automatically."}</p> : <div className="space-y-3">{requests.map(ride => <article key={ride.id} className="rounded-2xl border border-slate-200 p-3"><div className="flex justify-between gap-3"><div><p className="text-xs font-bold text-sky-700">{Number(ride.pickup_distance_km || 0).toFixed(1)} km away · {currentVehicle}</p><h3 className="font-extrabold">{ride.passenger_name}</h3></div><b className="text-lg text-sky-700">₹{Number(ride.estimated_fare).toFixed(0)}</b></div><p className="mt-2 text-sm"><b>Pickup:</b> {ride.pickup}</p><p className="mt-1 text-sm"><b>Drop:</b> {ride.destination}</p><div className="mt-3 grid grid-cols-2 gap-2"><button disabled={busy === ride.id} onClick={() => void act(ride, "reject")} className="rounded-xl border border-rose-200 py-3 text-sm font-bold text-rose-700 disabled:opacity-50">Decline</button><button disabled={busy === ride.id} onClick={() => void act(ride, "accept")} className="rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white disabled:opacity-50">{busy === ride.id ? "Please wait…" : "Accept ride"}</button></div></article>)}</div>)}
-      {sheet === "active" && (active.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">Accepted rides will appear here.</p> : <div className="space-y-3">{active.map(ride => <article key={ride.id} className="rounded-2xl border border-slate-200 p-3"><div className="flex justify-between gap-2"><b>{ride.passenger_name}</b><span className="rounded-full bg-sky-100 px-2 py-1 text-xs font-bold">{statusNames[ride.status] || ride.status}</span></div><p className="mt-2 text-sm">Pickup: {ride.pickup}</p><p className="mt-1 text-sm">Drop: {ride.destination}</p><div className="mt-3 flex flex-wrap gap-2">{ride.status === "accepted" && <button onClick={() => void act(ride, "arriving")} className="rounded-xl bg-sky-600 px-3 py-2 text-sm font-bold text-white">I'm arriving</button>}{ride.status === "arriving" && <button onClick={() => void act(ride, "start")} className="rounded-xl bg-sky-600 px-3 py-2 text-sm font-bold text-white">Start ride</button>}{ride.status === "in_progress" && <button onClick={() => void act(ride, "complete")} className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white">Complete ride</button>}<Link href={"/ride/track?ride=" + encodeURIComponent(ride.id)} className="rounded-xl border px-3 py-2 text-sm font-bold">Passenger tracking</Link></div></article>)}</div>)}
-    </section>}
-
-    <section className="absolute inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-[600] max-h-[calc(100dvh-210px)] overflow-y-auto overscroll-contain rounded-t-[28px] border-t border-white bg-white shadow-[0_-12px_40px_rgba(15,23,42,.16)] sm:inset-x-auto sm:bottom-6 sm:right-6 sm:max-h-[calc(100dvh-48px)] sm:w-[390px] sm:rounded-3xl sm:border sm:shadow-2xl">
-      <div className="mx-auto mb-1 mt-2 h-1 w-10 rounded-full bg-slate-200 sm:hidden" />
-      <div className="px-4 pb-4 pt-2 sm:p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div><p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Your shift</p><h1 className="mt-1 text-xl font-black tracking-tight">{presence.is_online ? "You're online and ready" : "Ready to go, Captain?"}</h1><p className="mt-1 text-xs text-slate-500">{presence.is_online ? "Stay available to receive nearby trips." : "Go online when you're ready to accept trips."}</p></div>
-          <span className={"shrink-0 rounded-full px-3 py-1.5 text-xs font-extrabold " + (presence.is_online ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600")}>{presence.is_online ? "● ONLINE" : "○ OFFLINE"}</span>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span
+              className={
+                "hidden items-center gap-2 rounded-full border px-3 py-2 text-xs font-bold sm:flex " +
+                (presence.is_online
+                  ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-200"
+                  : "border-white/10 bg-white/5 text-slate-300")
+              }
+            >
+              <span
+                className={
+                  "h-2 w-2 rounded-full " +
+                  (presence.is_online ? "animate-pulse bg-emerald-300" : "bg-slate-500")
+                }
+              />
+              {presence.is_online ? "You are online" : "You are offline"}
+            </span>
+            <Link
+              href="/driver/notifications"
+              aria-label="Ride notifications"
+              className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-lg text-slate-100 transition hover:bg-white/10"
+            >
+              ♧
+              {requests.length > 0 && (
+                <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-emerald-300 ring-2 ring-[#071827]" />
+              )}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-label="Open driver menu"
+              aria-expanded={menuOpen}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-xl font-bold text-slate-100 hover:bg-white/10 lg:hidden"
+            >
+              {menuOpen ? "×" : "☰"}
+            </button>
+          </div>
         </div>
-        <button onClick={() => void toggleOnline()} disabled={switching} className={"mt-4 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-base font-black text-white shadow-md transition active:scale-[0.99] disabled:opacity-60 " + (presence.is_online ? "bg-slate-900 hover:bg-slate-800" : "bg-sky-600 hover:bg-sky-700")}>
-          <span className="text-lg">{switching || locating ? "…" : presence.is_online ? "Ⅱ" : "▶"}</span>{switching ? "Please wait…" : locating ? "Finding your location…" : presence.is_online ? "GO OFFLINE" : "GO ONLINE"}
-        </button>
-        <div className="mt-3 grid grid-cols-3 divide-x divide-slate-100 rounded-2xl border border-slate-100 bg-slate-50 py-3">
-          <div className="px-2"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">This week</p><p className="mt-1 text-lg font-black">₹{weeklyEstimate}</p></div>
-          <div className="px-2"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Completed</p><p className="mt-1 text-lg font-black">{earnings?.completed_rides ?? "—"}</p></div>
-          <div className="px-2"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Active</p><p className="mt-1 text-lg font-black">{active.length}</p></div>
+      </header>
+
+      {menuOpen && (
+        <nav className="fixed inset-x-3 top-[72px] z-[900] overflow-hidden rounded-2xl border border-white/10 bg-[#0b2234] shadow-2xl lg:hidden">
+          {navigation.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center gap-3 border-b border-white/5 px-4 py-3 text-sm font-bold text-slate-200 last:border-0 hover:bg-white/5"
+            >
+              <span className="w-6 text-center text-emerald-300">{item.symbol}</span>
+              {item.label}
+              <span className="ml-auto text-slate-500">›</span>
+            </Link>
+          ))}
+        </nav>
+      )}
+
+      <div className="relative mx-auto grid max-w-[1500px] gap-5 px-3 py-4 sm:px-6 sm:py-6 lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-7 lg:px-8">
+        <aside className="hidden lg:block">
+          <div className="sticky top-[92px] space-y-4">
+            <section className="rounded-3xl border border-white/10 bg-[#0b2234] p-3 shadow-xl shadow-black/10">
+              <p className="px-3 pb-3 pt-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-500">
+                Workspace
+              </p>
+              {navigation.map((item, index) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={
+                    "mb-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold transition last:mb-0 " +
+                    (index === 0
+                      ? "bg-emerald-300 text-[#062033] shadow-lg shadow-emerald-500/10"
+                      : "text-slate-300 hover:bg-white/5 hover:text-white")
+                  }
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-black/10 text-base">
+                    {item.symbol}
+                  </span>
+                  <span className="min-w-0">{item.label}</span>
+                </Link>
+              ))}
+            </section>
+
+            <section className="overflow-hidden rounded-3xl border border-emerald-300/15 bg-gradient-to-br from-[#0d3a3c] to-[#0b2638] p-5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-300/15 text-xl text-emerald-200">
+                ✦
+              </div>
+              <p className="mt-4 text-sm font-black">More rides. More earnings.</p>
+              <p className="mt-2 text-xs leading-5 text-slate-400">
+                Keep your status available to receive nearby requests.
+              </p>
+              <Link
+                href="/support"
+                className="mt-4 inline-flex text-xs font-extrabold text-emerald-200 hover:text-emerald-100"
+              >
+                Driver support <span className="ml-1">↗</span>
+              </Link>
+            </section>
+          </div>
+        </aside>
+
+        <div className="min-w-0 space-y-5 pb-20 lg:pb-4">
+          <section className="flex flex-col justify-between gap-4 rounded-3xl border border-white/10 bg-gradient-to-br from-[#0d2b40] via-[#0b2538] to-[#0b3b3a] p-5 shadow-xl shadow-black/10 sm:p-7 md:flex-row md:items-center">
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-emerald-200">
+                Driver dashboard
+              </p>
+              <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">
+                Good to see you, Captain <span aria-hidden="true">✦</span>
+              </h1>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
+                Your rides, earnings and driver activity—all in one place.
+              </p>
+              <p className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+                <span
+                  className={
+                    "h-2 w-2 rounded-full " +
+                    (presence.is_online ? "bg-emerald-300" : "bg-slate-500")
+                  }
+                />
+                {presence.is_online
+                  ? "Your profile is available for nearby ride requests."
+                  : "You are offline. Go online when you're ready to ride."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void toggleOnline()}
+              disabled={switching || locating}
+              className={
+                "flex min-h-[54px] w-full shrink-0 items-center justify-center gap-3 rounded-2xl px-6 py-4 text-sm font-black tracking-wide text-[#052333] shadow-lg transition hover:brightness-105 active:scale-[0.99] disabled:cursor-wait disabled:opacity-60 md:w-[220px] " +
+                (presence.is_online
+                  ? "bg-slate-100 text-slate-900 shadow-black/10"
+                  : "bg-gradient-to-r from-emerald-300 to-emerald-400 shadow-emerald-500/15")
+              }
+            >
+              <span className="text-lg">{switching || locating ? "…" : presence.is_online ? "Ⅱ" : "▶"}</span>
+              {switching
+                ? "PLEASE WAIT…"
+                : locating
+                  ? "FINDING LOCATION…"
+                  : presence.is_online
+                    ? "GO OFFLINE"
+                    : "GO ONLINE"}
+            </button>
+          </section>
+
+          {message && (
+            <div
+              role="status"
+              className="rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100"
+            >
+              {message}
+            </div>
+          )}
+
+          <section className="grid grid-cols-2 gap-3 xl:grid-cols-4" aria-label="Driver summary">
+            {[
+              {
+                label: "Estimated total",
+                value: totalEstimate,
+                note: "From completed ride fares",
+                symbol: "₹",
+              },
+              {
+                label: "This week",
+                value: weeklyEstimate,
+                note: "Estimated ride fares",
+                symbol: "↗",
+              },
+              {
+                label: "Completed rides",
+                value: earnings?.completed_rides ?? "—",
+                note: "All completed rides",
+                symbol: "✓",
+              },
+              {
+                label: "Active trips",
+                value: active.length,
+                note: "Currently in progress",
+                symbol: "⌁",
+              },
+            ].map((stat) => (
+              <article
+                key={stat.label}
+                className="rounded-2xl border border-white/10 bg-[#0b2234] p-4 shadow-lg shadow-black/5 sm:rounded-3xl sm:p-5"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-bold leading-4 text-slate-400 sm:text-xs">
+                    {stat.label}
+                  </p>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-300/10 text-sm font-black text-emerald-200">
+                    {stat.symbol}
+                  </span>
+                </div>
+                <p className="mt-3 break-words text-xl font-black tracking-tight sm:text-2xl">
+                  {loading && earnings === null ? "…" : stat.value}
+                </p>
+                <p className="mt-1 text-[10px] leading-4 text-slate-500 sm:text-xs">
+                  {stat.note}
+                </p>
+              </article>
+            ))}
+          </section>
+
+          <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(330px,0.85fr)]">
+            <article className="min-w-0 overflow-hidden rounded-3xl border border-white/10 bg-[#0b2234] shadow-xl shadow-black/10">
+              <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-3 pt-5 sm:px-5">
+                <div>
+                  <h2 className="text-base font-black sm:text-lg">Live driver map</h2>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {location ? "Your current GPS position" : "Map preview · Hyderabad"}
+                  </p>
+                </div>
+                <span
+                  className={
+                    "rounded-full border px-3 py-1.5 text-[10px] font-extrabold " +
+                    (presence.is_online
+                      ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-200"
+                      : "border-white/10 bg-white/5 text-slate-400")
+                  }
+                >
+                  {presence.is_online ? "● GPS LIVE" : "○ OFFLINE"}
+                </span>
+              </div>
+              <div className="h-[280px] overflow-hidden px-3 pb-3 sm:h-[340px] sm:px-4 sm:pb-4">
+                <div className="h-full overflow-hidden rounded-2xl border border-white/10">
+                  <DriverLiveMap
+                    location={location}
+                    online={presence.is_online}
+                    onLocate={centerOnLocation}
+                    locating={locating}
+                    status={locationStatus}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 px-4 py-3 sm:px-5">
+                <p className="min-w-0 text-xs leading-5 text-slate-400">
+                  {locationStatus}
+                </p>
+                <button
+                  type="button"
+                  onClick={centerOnLocation}
+                  disabled={locating}
+                  className="shrink-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 disabled:opacity-50"
+                >
+                  {locating ? "Locating…" : "Center map"}
+                </button>
+              </div>
+            </article>
+
+            <article className="min-w-0 rounded-3xl border border-white/10 bg-[#0b2234] p-4 shadow-xl shadow-black/10 sm:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-black sm:text-lg">New ride requests</h2>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Requests matched to your selected vehicle
+                  </p>
+                </div>
+                <span className="flex h-8 min-w-8 items-center justify-center rounded-xl bg-emerald-300/10 px-2 text-sm font-black text-emerald-200">
+                  {requests.length}
+                </span>
+              </div>
+
+              {!presence.is_online ? (
+                <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
+                  <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 text-2xl text-slate-400">
+                    ◷
+                  </span>
+                  <p className="mt-3 text-sm font-extrabold">You’re currently offline</p>
+                  <p className="mx-auto mt-1 max-w-xs text-xs leading-5 text-slate-400">
+                    Go online to receive ride requests near your location.
+                  </p>
+                </div>
+              ) : requestCards.length === 0 ? (
+                <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
+                  <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-300/10 text-2xl text-emerald-200">
+                    ⌁
+                  </span>
+                  <p className="mt-3 text-sm font-extrabold">
+                    {loading ? "Checking for requests…" : "Waiting for your next ride"}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-400">
+                    New matching requests refresh automatically.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {requestCards.map((ride) => (
+                    <div
+                      key={ride.id}
+                      className="rounded-2xl border border-white/10 bg-[#102b3e] p-3 sm:p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-extrabold uppercase tracking-wide text-emerald-200">
+                            {Number(ride.pickup_distance_km || 0).toFixed(1)} km away · {currentVehicle}
+                          </p>
+                          <p className="mt-1 truncate text-sm font-black">{ride.passenger_name || "Ride customer"}</p>
+                        </div>
+                        <p className="shrink-0 text-lg font-black text-emerald-200">
+                          {money(Number(ride.estimated_fare || 0))}
+                        </p>
+                      </div>
+                      <div className="mt-3 space-y-2 text-xs leading-5 text-slate-300">
+                        <p className="flex gap-2"><span className="text-emerald-300">●</span><span className="min-w-0"><b className="text-slate-100">Pickup</b> · {ride.pickup}</span></p>
+                        <p className="flex gap-2"><span className="text-rose-300">●</span><span className="min-w-0"><b className="text-slate-100">Drop</b> · {ride.destination}</span></p>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          disabled={busy === ride.id}
+                          onClick={() => void act(ride, "reject")}
+                          className="min-h-10 rounded-xl border border-white/10 bg-white/5 px-2 text-xs font-extrabold text-slate-300 hover:bg-white/10 disabled:opacity-50"
+                        >
+                          Decline
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy === ride.id}
+                          onClick={() => void act(ride, "accept")}
+                          className="min-h-10 rounded-xl bg-emerald-300 px-2 text-xs font-black text-[#062033] hover:bg-emerald-200 disabled:opacity-50"
+                        >
+                          {busy === ride.id ? "Please wait…" : "Accept ride"}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {requests.length > 3 && (
+                    <p className="text-center text-xs text-slate-400">
+                      +{requests.length - 3} more requests are available.
+                    </p>
+                  )}
+                </div>
+              )}
+              <div className="mt-4 border-t border-white/10 pt-4">
+                <Link
+                  href="/driver/notifications"
+                  className="flex items-center justify-between text-xs font-extrabold text-emerald-200 hover:text-emerald-100"
+                >
+                  View all ride activity <span>↗</span>
+                </Link>
+              </div>
+            </article>
+          </section>
+
+          <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+            <article className="rounded-3xl border border-white/10 bg-[#0b2234] p-4 shadow-xl shadow-black/10 sm:p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-black sm:text-lg">Active trips</h2>
+                  <p className="mt-1 text-xs text-slate-400">Manage each trip from pickup to completion.</p>
+                </div>
+                <Link
+                  href="/driver/rides"
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold text-slate-200 hover:bg-white/10"
+                >
+                  All rides ↗
+                </Link>
+              </div>
+
+              {active.length === 0 ? (
+                <div className="mt-4 flex items-center gap-3 rounded-2xl border border-dashed border-white/10 p-4">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/5 text-xl text-slate-400">⌁</span>
+                  <div>
+                    <p className="text-sm font-extrabold">No active trips</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-400">Accepted rides will appear here with the next action ready.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {active.map((ride) => (
+                    <article key={ride.id} className="rounded-2xl border border-white/10 bg-[#102b3e] p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-black">{ride.passenger_name || "Ride customer"}</p>
+                          <p className="mt-1 text-xs text-slate-400">{currentVehicle} · {money(Number(ride.estimated_fare || 0))} estimated fare</p>
+                        </div>
+                        <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-[10px] font-extrabold text-emerald-200">
+                          {statusNames[ride.status] || ride.status}
+                        </span>
+                      </div>
+                      <div className="mt-3 grid gap-2 text-xs leading-5 text-slate-300 sm:grid-cols-2">
+                        <p><span className="text-emerald-300">● </span><b className="text-slate-100">Pickup:</b> {ride.pickup}</p>
+                        <p><span className="text-rose-300">● </span><b className="text-slate-100">Drop:</b> {ride.destination}</p>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {ride.status === "accepted" && (
+                          <button type="button" onClick={() => void act(ride, "arriving")} disabled={busy === ride.id} className="rounded-xl bg-emerald-300 px-4 py-2.5 text-xs font-black text-[#062033] disabled:opacity-50">
+                            I’m arriving
+                          </button>
+                        )}
+                        {ride.status === "arriving" && (
+                          <button type="button" onClick={() => void act(ride, "start")} disabled={busy === ride.id} className="rounded-xl bg-emerald-300 px-4 py-2.5 text-xs font-black text-[#062033] disabled:opacity-50">
+                            Start ride
+                          </button>
+                        )}
+                        {ride.status === "in_progress" && (
+                          <button type="button" onClick={() => void act(ride, "complete")} disabled={busy === ride.id} className="rounded-xl bg-emerald-300 px-4 py-2.5 text-xs font-black text-[#062033] disabled:opacity-50">
+                            Complete ride
+                          </button>
+                        )}
+                        <Link href={"/ride/track?ride=" + encodeURIComponent(ride.id)} className="rounded-xl border border-white/10 px-4 py-2.5 text-xs font-extrabold text-slate-200 hover:bg-white/5">
+                          Passenger tracking
+                        </Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </article>
+
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-1">
+              <Link href="/driver/earnings" className="group rounded-2xl border border-white/10 bg-[#0b2234] p-4 transition hover:border-emerald-300/30 hover:bg-[#0d293c] sm:rounded-3xl sm:p-5">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-300/10 text-lg font-black text-emerald-200">₹</span>
+                <p className="mt-4 text-sm font-black">Earnings & wallet</p>
+                <p className="mt-1 text-xs leading-5 text-slate-400">Review fare estimates and ride history.</p>
+                <span className="mt-4 inline-flex text-xs font-extrabold text-emerald-200">Open earnings ↗</span>
+              </Link>
+              <Link href="/driver/profile" className="group rounded-2xl border border-white/10 bg-[#0b2234] p-4 transition hover:border-emerald-300/30 hover:bg-[#0d293c] sm:rounded-3xl sm:p-5">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-300/10 text-lg font-black text-cyan-200">◉</span>
+                <p className="mt-4 text-sm font-black">Profile & documents</p>
+                <p className="mt-1 text-xs leading-5 text-slate-400">Manage driver and vehicle details.</p>
+                <span className="mt-4 inline-flex text-xs font-extrabold text-cyan-200">View profile ↗</span>
+              </Link>
+              <Link href="/support" className="col-span-2 group rounded-2xl border border-white/10 bg-[#0b2234] p-4 transition hover:border-emerald-300/30 hover:bg-[#0d293c] sm:rounded-3xl sm:p-5 xl:col-span-1">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-300/10 text-lg font-black text-amber-200">?</span>
+                <p className="mt-4 text-sm font-black">Captain support</p>
+                <p className="mt-1 text-xs leading-5 text-slate-400">Get help with trips, documents or your account.</p>
+                <span className="mt-4 inline-flex text-xs font-extrabold text-amber-200">Get help ↗</span>
+              </Link>
+            </div>
+          </section>
+
+          <p className="px-1 pb-2 text-[10px] leading-5 text-slate-500">
+            Earnings are estimated from recorded fares. Payment settlement and withdrawals are not enabled until a payment provider is connected.
+          </p>
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <button onClick={() => setSheet(sheet === "requests" ? null : "requests")} className={"flex min-h-[48px] items-center justify-between rounded-xl border px-3 text-sm font-extrabold " + (sheet === "requests" ? "border-sky-300 bg-sky-50 text-sky-800" : "border-slate-200 bg-white text-slate-800")}><span>Ride requests</span><span className="rounded-full bg-sky-100 px-2 py-1 text-xs text-sky-800">{requests.length}</span></button>
-          <button onClick={() => setSheet(sheet === "active" ? null : "active")} className={"flex min-h-[48px] items-center justify-between rounded-xl border px-3 text-sm font-extrabold " + (sheet === "active" ? "border-sky-300 bg-sky-50 text-sky-800" : "border-slate-200 bg-white text-slate-800")}><span>Active rides</span><span className="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-800">{active.length}</span></button>
-        </div>
-        {(message || (presence.is_online && locationStatus && !location)) && <p role="status" className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">{message || locationStatus}</p>}
-        <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3"><span className="text-[10px] leading-4 text-slate-400">GPS {location ? "available" : "waiting"} · {loading ? "Syncing driver details…" : "Trips refresh automatically"}</span><Link href="/driver/earnings" className="shrink-0 text-xs font-extrabold text-sky-700">Earnings details ↗</Link></div>
-        <p className="mt-2 text-[10px] leading-4 text-slate-400">Earnings shown are estimates. Live payment settlement is not connected.</p>
       </div>
-    </section>
 
-    <nav aria-label="Driver app navigation" className="fixed inset-x-0 bottom-0 z-[800] border-t border-slate-200 bg-white px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 sm:hidden">
-      <div className="mx-auto grid max-w-xl grid-cols-4 gap-1">
-        <Link href="/driver/instant-rides" aria-current="page" className="flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl bg-sky-50 px-1 text-sky-700"><span className="text-xl leading-5">⌂</span><span className="text-[10px] font-extrabold">Home</span></Link>
-        <Link href="/driver/earnings" className="flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-500"><span className="text-xl leading-5">₹</span><span className="text-[10px] font-bold">Earnings</span></Link>
-        <Link href="/driver/rides" className="flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-500"><span className="text-xl leading-5">▤</span><span className="text-[10px] font-bold">My rides</span></Link>
-        <Link href="/driver/profile" className="flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-500"><span className="text-xl leading-5">●</span><span className="text-[10px] font-bold">Profile</span></Link>
-      </div>
-    </nav>
-  </main>;
+      <nav aria-label="Driver app navigation" className="fixed inset-x-0 bottom-0 z-[850] border-t border-white/10 bg-[#071827]/95 px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur-xl lg:hidden">
+        <div className="mx-auto grid max-w-xl grid-cols-4 gap-1">
+          {[
+            { label: "Home", href: "/driver/instant-rides", symbol: "⌂" },
+            { label: "Rides", href: "/driver/rides", symbol: "↗" },
+            { label: "Earnings", href: "/driver/earnings", symbol: "₹" },
+            { label: "Profile", href: "/driver/profile", symbol: "◉" },
+          ].map((item, index) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={index === 0 ? "page" : undefined}
+              className={
+                "flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl px-1 " +
+                (index === 0 ? "bg-emerald-300/10 text-emerald-200" : "text-slate-500 hover:text-slate-200")
+              }
+            >
+              <span className="text-xl leading-5">{item.symbol}</span>
+              <span className="text-[10px] font-extrabold">{item.label}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
+    </main>
+  );
 }
