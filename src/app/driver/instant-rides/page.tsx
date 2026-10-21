@@ -22,6 +22,7 @@ export default function DriverInstantRidesPage() {
   const [loading, setLoading] = useState(true);
   const [sheet, setSheet] = useState<"requests" | "active" | null>(null);
   const [switching, setSwitching] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const watchId = useRef<number | null>(null);
   const onlineRef = useRef(false);
 
@@ -146,10 +147,17 @@ export default function DriverInstantRidesPage() {
       navigator.geolocation.getCurrentPosition(pos => { const next = { lat: pos.coords.latitude, lon: pos.coords.longitude }; setLocation(next); setLocationStatus("Map centered on your current location."); setLocating(false); }, err => { setLocationStatus(err.code === 1 ? "Location permission denied. Allow location for this website." : "Unable to get GPS location."); setLocating(false); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 });
     }} locating={locating} status={locationStatus} /></div>
 
-    <header className="absolute left-3 right-3 top-3 z-[600] flex items-center justify-between gap-2 sm:left-5 sm:right-5 sm:top-5">
-      <Link href="/" className="rounded-2xl border border-white/70 bg-white/95 px-4 py-3 text-lg font-black shadow-lg backdrop-blur">Ride<span className="text-sky-600">Mitra</span></Link>
-      <div className="flex gap-2"><Link href="/driver/notifications" className="rounded-2xl border border-white/70 bg-white/95 px-3 py-3 text-sm font-bold shadow-lg backdrop-blur">Activity</Link><Link href="/driver/onboarding" className="rounded-2xl border border-white/70 bg-white/95 px-3 py-3 text-sm font-bold shadow-lg backdrop-blur">Vehicle</Link></div>
+    <header className="absolute left-3 right-3 top-3 z-[600] flex items-start justify-between gap-3 sm:left-5 sm:right-5 sm:top-5">
+      <div className="flex items-center gap-2 rounded-2xl border border-white/80 bg-white/95 p-2 pr-4 shadow-xl backdrop-blur">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-600 text-xl font-black text-white">R</div>
+        <div><p className="text-base font-black leading-5 tracking-tight">RideMitra</p><p className="mt-0.5 flex items-center gap-1.5 text-[11px] font-bold text-slate-500"><span className={"inline-block h-2 w-2 rounded-full " + (presence.is_online ? "bg-emerald-500" : "bg-slate-400")} />{presence.is_online ? "Online · accepting rides" : "Offline · not accepting rides"}</p></div>
+      </div>
+      <button type="button" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open driver menu" aria-expanded={menuOpen} className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/80 bg-white/95 text-2xl font-bold shadow-xl backdrop-blur">{menuOpen ? "×" : "☰"}</button>
     </header>
+    {menuOpen && <nav className="absolute right-3 top-[76px] z-[700] w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:right-5">
+      <div className="border-b border-slate-100 bg-sky-50 p-4"><p className="font-black">Driver menu</p><p className="mt-1 text-xs text-slate-500">Your RideMitra account</p></div>
+      {[["My rides","/driver/rides"],["Earnings","/driver/earnings"],["Ride activity","/driver/notifications"],["Vehicle & documents","/driver/onboarding"],["My profile","/driver/profile"],["Help & support","/support"]].map(([label,href]) => <Link key={href} href={href} onClick={() => setMenuOpen(false)} className="block border-b border-slate-100 px-4 py-3 text-sm font-bold text-slate-700 last:border-0 hover:bg-sky-50">{label}<span className="float-right text-slate-400">›</span></Link>)}
+    </nav>}
 
     <div className="absolute bottom-3 left-3 right-3 z-[600] sm:bottom-5 sm:left-5 sm:right-5">
       {sheet && <section className="mb-3 max-h-[48dvh] overflow-y-auto rounded-3xl border border-white/80 bg-white/95 p-4 shadow-2xl backdrop-blur-xl sm:ml-auto sm:max-w-xl">
@@ -158,14 +166,23 @@ export default function DriverInstantRidesPage() {
         {sheet === "active" && (active.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">Accepted rides will appear here.</p> : <div className="space-y-3">{active.map(ride => <article key={ride.id} className="rounded-2xl border border-slate-200 p-3"><div className="flex justify-between gap-2"><b>{ride.passenger_name}</b><span className="rounded-full bg-sky-100 px-2 py-1 text-xs font-bold">{statusNames[ride.status] || ride.status}</span></div><p className="mt-2 text-sm">Pickup: {ride.pickup}</p><p className="mt-1 text-sm">Drop: {ride.destination}</p><div className="mt-3 flex flex-wrap gap-2">{ride.status === "accepted" && <button onClick={() => void act(ride, "arriving")} className="rounded-xl bg-sky-600 px-3 py-2 text-sm font-bold text-white">I'm arriving</button>}{ride.status === "arriving" && <button onClick={() => void act(ride, "start")} className="rounded-xl bg-sky-600 px-3 py-2 text-sm font-bold text-white">Start ride</button>}{ride.status === "in_progress" && <button onClick={() => void act(ride, "complete")} className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white">Complete ride</button>}<Link href={"/ride/track?ride=" + encodeURIComponent(ride.id)} className="rounded-xl border px-3 py-2 text-sm font-bold">Passenger tracking</Link></div></article>)}</div>)}
       </section>}
 
-      <section className="rounded-3xl border border-white/80 bg-white/95 p-4 shadow-2xl backdrop-blur-xl sm:ml-auto sm:max-w-xl sm:p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0"><div className="flex items-center gap-2"><span className={"h-2.5 w-2.5 rounded-full " + (presence.is_online ? "animate-pulse bg-emerald-500" : "bg-slate-400")} /><h1 className="truncate text-lg font-black">{presence.is_online ? "You're online" : "You're offline"}</h1></div><p className="mt-1 truncate text-xs text-slate-500">{presence.is_online ? "Finding rides near you · " + currentVehicle : "Go online to start receiving nearby rides"}</p></div>
-          <button onClick={() => void toggleOnline()} disabled={switching} className={"shrink-0 rounded-2xl px-5 py-3 text-sm font-extrabold text-white shadow-md disabled:opacity-60 " + (presence.is_online ? "bg-slate-800" : "bg-emerald-600")}>{switching ? "Please wait…" : locating ? "Finding GPS…" : presence.is_online ? "Go offline" : "Go online"}</button>
+      <section className="overflow-hidden rounded-[28px] border border-white/90 bg-white/95 shadow-2xl backdrop-blur-xl sm:ml-auto sm:max-w-md">
+        <div className="px-4 pb-3 pt-4 sm:px-5">
+          <div className="mb-3 flex items-center justify-between">
+            <div><p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">Driver mode</p><h1 className="mt-1 text-xl font-black tracking-tight">{presence.is_online ? "You're ready for rides" : "Ready when you are"}</h1></div>
+            <div className={"rounded-full px-3 py-1.5 text-xs font-extrabold " + (presence.is_online ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600")}>{presence.is_online ? "● ONLINE" : "○ OFFLINE"}</div>
+          </div>
+          <button onClick={() => void toggleOnline()} disabled={switching} className={"flex w-full items-center justify-center gap-3 rounded-2xl px-5 py-4 text-base font-black text-white shadow-lg transition active:scale-[0.99] disabled:opacity-60 " + (presence.is_online ? "bg-slate-900 hover:bg-slate-800" : "bg-sky-600 hover:bg-sky-700")}>
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-lg">{switching || locating ? "…" : presence.is_online ? "Ⅱ" : "▶"}</span>{switching ? "Please wait…" : locating ? "Finding your location…" : presence.is_online ? "Go offline" : "GO ONLINE"}
+          </button>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button onClick={() => setSheet(sheet === "requests" ? null : "requests")} className={"rounded-2xl border px-3 py-3 text-left transition " + (sheet === "requests" ? "border-sky-600 bg-sky-50" : "border-slate-200 bg-white hover:bg-slate-50")}><span className="flex items-center justify-between text-sm font-extrabold">Ride requests <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">{requests.length}</span></span><span className="mt-1 block text-xs text-slate-500">Nearby bookings</span></button>
+            <button onClick={() => setSheet(sheet === "active" ? null : "active")} className={"rounded-2xl border px-3 py-3 text-left transition " + (sheet === "active" ? "border-sky-600 bg-sky-50" : "border-slate-200 bg-white hover:bg-slate-50")}><span className="flex items-center justify-between text-sm font-extrabold">Active rides <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">{active.length}</span></span><span className="mt-1 block text-xs text-slate-500">Manage current trips</span></button>
+          </div>
+          {(message || (presence.is_online && locationStatus && !location)) && <p role="status" className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">{message || locationStatus}</p>}
+          <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3"><div><p className="text-xs font-bold text-slate-700">{currentVehicle} selected</p><p className="mt-0.5 text-[10px] text-slate-500">GPS {location ? "location available" : "not acquired yet"} · {loading ? "Syncing…" : "Auto-refresh enabled"}</p></div><Link href="/driver/onboarding" className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50">Vehicle settings ›</Link></div>
+          <p className="mt-2 text-[10px] leading-4 text-slate-400">Keep this page open to share GPS while online. Fare amounts are estimates; live payments are not connected.</p>
         </div>
-        <div className="mt-3 flex gap-2"><button onClick={() => setSheet(sheet === "requests" ? null : "requests")} className={"flex-1 rounded-xl px-3 py-3 text-sm font-extrabold " + (sheet === "requests" ? "bg-sky-600 text-white" : "bg-sky-50 text-sky-800")}>Ride requests <span className="ml-1 rounded-full bg-white/80 px-2 py-0.5 text-xs">{requests.length}</span></button><button onClick={() => setSheet(sheet === "active" ? null : "active")} className={"flex-1 rounded-xl px-3 py-3 text-sm font-extrabold " + (sheet === "active" ? "bg-sky-600 text-white" : "bg-sky-50 text-sky-800")}>Active rides <span className="ml-1 rounded-full bg-white/80 px-2 py-0.5 text-xs">{active.length}</span></button></div>
-        {(message || (presence.is_online && locationStatus && !location)) && <p role="status" className="mt-3 rounded-xl bg-amber-50 p-3 text-xs leading-5 text-amber-900">{message || locationStatus}</p>}
-        <p className="mt-2 text-[10px] leading-4 text-slate-500">GPS sharing works while this page stays open and location permission is enabled. Fares are estimates; payments are not connected.</p>
       </section>
     </div>
   </main>;
