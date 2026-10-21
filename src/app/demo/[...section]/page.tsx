@@ -14,7 +14,7 @@ const sampleRequests = [
 ];
 
 const nav = [
-  ["Home", "/demo"], ["Dashboard", "/demo/dashboard"], ["Instant rides", "/demo/instant-rides"],
+  ["Home", "/demo"], ["Driver onboarding", "/demo/onboarding"], ["Dashboard", "/demo/dashboard"], ["Instant rides", "/demo/instant-rides"],
   ["All rides", "/demo/rides"], ["Incoming request", "/demo/rides/request"], ["Active ride", "/demo/active-ride"],
   ["Ride history", "/demo/history"], ["Shared journeys", "/demo/trips"], ["Documents & verification", "/demo/documents"],
   ["Earnings & payouts", "/demo/earnings"], ["Driver profile", "/demo/profile"], ["Notifications", "/demo/notifications"],
@@ -22,6 +22,7 @@ const nav = [
 ];
 
 const contentPages: Record<string, { title: string; description: string }> = {
+  onboarding: { title: "Driver registration & verification", description: "A guided demo of account details, vehicle selection, document checklist and verification status. Demo information is not submitted to RideMitra." },
   dashboard: { title: "Driver dashboard", description: "Your daily driver overview and shortcuts." },
   rides: { title: "All rides", description: "Review separate sample cards for incoming, active and completed trips." },
   history: { title: "Ride history", description: "A list of fictional completed rides." },
@@ -41,6 +42,9 @@ export default function DemoFeaturePage() {
   const [rideStage, setRideStage] = useState(0);
   const [notice, setNotice] = useState("Guest demo active · All rides, fares and actions are simulated.");
   const [vehicle, setVehicle] = useState("Bike");
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [onboardingData, setOnboardingData] = useState({ fullName: "", phone: "", city: "Hyderabad", vehicle: "Bike", registration: "", licence: false, rc: false, insurance: false, photo: false });
+  const [onboardingSubmitted, setOnboardingSubmitted] = useState(false);
   const [notificationsOn, setNotificationsOn] = useState(true);
   const [supportTopic, setSupportTopic] = useState("Ride issue");
   const [supportSent, setSupportSent] = useState(false);
@@ -73,6 +77,29 @@ export default function DemoFeaturePage() {
       </div>
     </main>
   );
+
+  if (section === "onboarding") {
+    const steps = ["Account details", "Choose vehicle", "Vehicle details", "Documents", "Review"];
+    const update = (key: string, value: string | boolean) => setOnboardingData(prev => ({ ...prev, [key]: value }));
+    const canContinue = onboardingStep === 0 ? onboardingData.fullName.trim().length > 1 && onboardingData.phone.trim().length >= 10 :
+      onboardingStep === 1 ? Boolean(onboardingData.vehicle) :
+      onboardingStep === 2 ? onboardingData.registration.trim().length >= 4 :
+      onboardingStep === 3 ? onboardingData.licence && onboardingData.rc && onboardingData.insurance && onboardingData.photo : true;
+    return shell(<div className="mx-auto max-w-3xl">
+      <div className="mb-5 grid grid-cols-5 gap-2">{steps.map((label,index)=><div key={label}><div className={"h-2 rounded-full " + (index <= onboardingStep ? "bg-sky-600" : "bg-slate-200")} /><p className={"mt-2 text-[11px] font-bold " + (index === onboardingStep ? "text-sky-800" : "text-slate-500")}>{index + 1}. {label}</p></div>)}</div>
+      <form onSubmit={event => { event.preventDefault(); if (onboardingStep < 4) setOnboardingStep(step => Math.min(step + 1, 4)); else { try { localStorage.setItem("ridemitra_demo_onboarding", JSON.stringify({ ...onboardingData, demoStatus: "pending" })); } catch {} setOnboardingSubmitted(true); setNotice("Demo application submitted on this screen only. No account was created and no documents were uploaded."); } }} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+        <h2 className="text-2xl font-black">{steps[onboardingStep]}</h2>
+        <p className="mt-2 text-sm text-slate-600">{["Enter sample applicant details to preview registration.", "Choose the vehicle you plan to register. This choice appears on the driver home screen.", "Enter the vehicle registration number for the demo.", "Confirm you have the required documents ready. This demo does not accept or upload files.", "Check the information before previewing the submission result."][onboardingStep]}</p>
+        {onboardingStep === 0 && <div className="mt-6 grid gap-4 sm:grid-cols-2"><label className="text-sm font-bold">Full name<input required value={onboardingData.fullName} onChange={e=>update("fullName",e.target.value)} className="mt-2 w-full rounded-xl border border-slate-300 p-3 font-normal" placeholder="Enter your name" /></label><label className="text-sm font-bold">Mobile number<input required inputMode="numeric" minLength={10} maxLength={10} pattern="[0-9]{10}" value={onboardingData.phone} onChange={e=>update("phone",e.target.value)} className="mt-2 w-full rounded-xl border border-slate-300 p-3 font-normal" placeholder="10-digit number" /></label><label className="text-sm font-bold sm:col-span-2">City<select value={onboardingData.city} onChange={e=>update("city",e.target.value)} className="mt-2 w-full rounded-xl border border-slate-300 bg-white p-3"><option>Hyderabad</option><option>Warangal</option><option>Vijayawada</option><option>Other</option></select></label></div>}
+        {onboardingStep === 1 && <div className="mt-6 grid gap-3 sm:grid-cols-3">{[["Bike","🏍️","Two-wheeler"],["Auto","🛺","Auto rickshaw"],["Cab","🚗","Car / cab"]].map(([name,emoji,detail])=><button key={name} type="button" onClick={()=>update("vehicle",name)} className={"rounded-2xl border-2 p-5 text-left transition " + (onboardingData.vehicle===name ? "border-sky-600 bg-sky-50 ring-2 ring-sky-100" : "border-slate-200 hover:border-sky-300")}><span className="text-3xl">{emoji}</span><span className="mt-3 block font-black">{name}</span><span className="mt-1 block text-xs text-slate-500">{detail}</span><span className="mt-3 block text-xs font-extrabold text-sky-800">{onboardingData.vehicle===name ? "Selected ✓" : "Choose vehicle"}</span></button>)}</div>}
+        {onboardingStep === 2 && <div className="mt-6 space-y-4"><div className="rounded-xl bg-sky-50 p-4"><p className="text-xs font-extrabold uppercase text-sky-800">Selected vehicle</p><p className="mt-1 text-lg font-black">{onboardingData.vehicle}</p></div><label className="block text-sm font-bold">Vehicle registration number<input required value={onboardingData.registration} onChange={e=>update("registration",e.target.value.toUpperCase())} className="mt-2 w-full rounded-xl border border-slate-300 p-3 uppercase" placeholder="e.g. TS09AB1234" /></label></div>}
+        {onboardingStep === 3 && <div className="mt-6 space-y-3">{[["licence","Driving licence"],["rc","Vehicle Registration Certificate (RC)"],["insurance","Valid vehicle insurance"],["photo","Profile photo / identity photo"]].map(([key,label])=><label key={key} className="flex items-center gap-3 rounded-xl border border-slate-200 p-4 text-sm font-bold"><input type="checkbox" checked={Boolean(onboardingData[key as keyof typeof onboardingData])} onChange={e=>update(key,e.target.checked)} className="h-5 w-5 accent-sky-600" />I have {label} ready</label>)}<p className="text-xs text-slate-500">Real verification may require additional documents or checks depending on the vehicle and local requirements.</p></div>}
+        {onboardingStep === 4 && <div className="mt-6 space-y-3 rounded-xl bg-slate-50 p-4 text-sm"><p><strong>Name:</strong> {onboardingData.fullName}</p><p><strong>Mobile:</strong> {onboardingData.phone}</p><p><strong>City:</strong> {onboardingData.city}</p><p><strong>Vehicle:</strong> {onboardingData.vehicle}</p><p><strong>Registration:</strong> {onboardingData.registration}</p><p><strong>Document checklist:</strong> {[onboardingData.licence,onboardingData.rc,onboardingData.insurance,onboardingData.photo].filter(Boolean).length}/4 marked ready</p><p className="rounded-xl border border-amber-200 bg-amber-50 p-3 font-semibold text-amber-900">Submitting this preview does not create a real account or approve a driver.</p></div>}
+        {onboardingSubmitted ? <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4"><h3 className="font-black text-amber-900">Demo status: Pending review</h3><p className="mt-1 text-sm text-amber-900">This is only a local preview. A real application must be submitted through the secured account workflow and reviewed by RideMitra.</p><Link href="/demo" className="mt-4 inline-flex rounded-xl bg-sky-700 px-4 py-3 font-extrabold text-white">Return to driver home →</Link></div> : <div className="mt-7 flex flex-wrap justify-between gap-3">{onboardingStep > 0 && <button type="button" onClick={()=>setOnboardingStep(step=>step-1)} className="rounded-xl border border-slate-300 px-5 py-3 font-bold">← Back</button>}<button type="submit" disabled={!canContinue} className="ml-auto rounded-xl bg-sky-700 px-5 py-3 font-extrabold text-white disabled:cursor-not-allowed disabled:bg-slate-300">{onboardingStep === 4 ? "Preview submission" : "Continue →"}</button></div>}
+      </form>
+      <p className="mt-4 text-xs text-slate-500">Privacy note: use fictional information in this guest demo. Do not enter real identity numbers or upload private documents here.</p>
+    </div>);
+  }
 
   if (section === "rides/request" || section === "instant-rides") {
     return shell(<div className="space-y-4">
