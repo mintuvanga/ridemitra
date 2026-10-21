@@ -70,6 +70,26 @@ export default function DemoDriverPage() {
           <article className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm"><h2 className="text-xl font-black">Shared journeys</h2><p className="mt-2 text-sm leading-6 text-slate-600">Preview sample route listings, departure times, seat counts and per-seat prices.</p><div className="mt-4 space-y-3"><div className="rounded-xl bg-sky-50 p-4"><p className="font-extrabold">Hyderabad → Warangal</p><p className="mt-1 text-sm text-slate-600">Tomorrow · 8:30 AM · 3 seats · ₹450 / seat</p></div><div className="rounded-xl bg-sky-50 p-4"><p className="font-extrabold">Hyderabad → Vijayawada</p><p className="mt-1 text-sm text-slate-600">Friday · 7:00 AM · 2 seats · ₹700 / seat</p></div></div><Link href="/trips" className="mt-4 inline-flex text-sm font-bold text-sky-700 underline">Open live journeys page (login may be required) →</Link></article>
           <article className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm"><h2 className="text-xl font-black">Driver verification checklist</h2><p className="mt-2 text-sm leading-6 text-slate-600">Preview the onboarding requirements without uploading personal files.</p><div className="mt-4 space-y-3">{["Driving licence", "Vehicle registration (RC)", "Vehicle insurance", "Selfie & identity check"].map((name) => <div key={name} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-3"><span className="text-sm font-bold">{name}</span><span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-800">Demo only</span></div>)}</div><p className="mt-4 text-xs leading-5 text-amber-800">Live driver acceptance still requires genuine verification approval.</p></article>
         </section>
+        <section className="mt-5 rounded-2xl border border-sky-100 bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="text-xl font-black">Explore every driver page</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Use these demo-only pages to preview the driver workspace without signing in. Actions use fictional data and do not affect a real account.</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              ["Dashboard", "/demo/dashboard", "Driver workspace overview"],
+              ["Instant rides", "/demo/instant-rides", "Requests and ride lifecycle"],
+              ["All rides", "/demo/rides", "Upcoming and past ride examples"],
+              ["Incoming request", "/demo/rides/request", "Try accept or reject"],
+              ["Ride history", "/demo/history", "Fictional completed rides"],
+              ["Shared journeys", "/demo/trips", "Routes, seats and sample prices"],
+              ["Documents & verification", "/demo/documents", "Onboarding checklist preview"],
+              ["Earnings & payouts", "/demo/earnings", "Sample totals and activity"],
+              ["Driver profile", "/demo/profile", "Sample profile details"],
+              ["Notifications", "/demo/notifications", "Example driver alerts"],
+              ["Help & support", "/demo/support", "Support topics preview"],
+              ["Settings", "/demo/settings", "Demo preferences"],
+            ].map(([label, href, detail]) => <Link key={href} href={href} className="rounded-xl border border-sky-100 p-4 transition hover:border-sky-300 hover:bg-sky-50"><span className="block font-extrabold">{label} <span className="text-sky-700">→</span></span><span className="mt-1 block text-sm text-slate-500">{detail}</span></Link>)}
+          </div>
+        </section>
         <footer className="py-7 text-center text-xs leading-5 text-slate-500">RideMitra Guest Demo · Sample data only · <Link href="/driver/login" className="font-bold text-sky-700 underline">Sign in to your private account</Link></footer>
       </div>
     </main>
