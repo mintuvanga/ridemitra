@@ -75,7 +75,7 @@ export default function DriverLiveMap({ location, online, onLocate, locating, st
     return () => { cancelled = true; };
   }, [location]);
 
-  return <div className="relative h-full min-h-[420px] w-full overflow-hidden bg-slate-100">
+  return <div className="relative h-full min-h-[240px] w-full overflow-hidden bg-[#102b3e]">
     <div ref={host} className="absolute inset-0 z-0" aria-label="Interactive driver map" />
     {!location && <div className="pointer-events-none absolute left-3 right-14 top-3 z-[500] rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur sm:left-5 sm:right-16 sm:top-5 sm:max-w-sm">
       <p className="text-sm font-extrabold text-slate-900">{online ? "Finding your GPS location…" : "Driver map"}</p>
