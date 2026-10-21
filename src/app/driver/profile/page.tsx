@@ -14,6 +14,7 @@ export default function DriverProfilePage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [signedOut, setSignedOut] = useState(false);
+  const hasChanges = !!profile && (name.trim() !== profile.full_name || city.trim() !== (profile.home_city || ""));
 
   async function loadProfile() {
     setLoading(true);
@@ -21,11 +22,13 @@ export default function DriverProfilePage() {
     try {
       const response = await fetch("/api/driver/profile", { cache: "no-store" });
       const data = await response.json();
-      if (response.status === 401) { setSignedOut(true); return; }
+      if (response.status === 401) { setSignedOut(true); setProfile(null); return; }
       if (!response.ok) throw new Error(data.error || "Could not load profile.");
+      setSignedOut(false);
       setProfile(data.profile);
       setName(data.profile.full_name || "");
       setCity(data.profile.home_city || "");
+      setSuccess("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load profile.");
     } finally { setLoading(false); }
@@ -33,16 +36,25 @@ export default function DriverProfilePage() {
 
   useEffect(() => { void loadProfile(); }, []);
 
+  function resetChanges() {
+    setName(profile?.full_name || "");
+    setCity(profile?.home_city || "");
+    setError("");
+    setSuccess("");
+  }
+
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!hasChanges) return;
     setSaving(true); setError(""); setSuccess("");
     try {
       const response = await fetch("/api/driver/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ full_name: name, home_city: city }),
+        body: JSON.stringify({ full_name: name.trim().replace(/\s+/g, " "), home_city: city.trim().replace(/\s+/g, " ") }),
       });
       const data = await response.json();
+      if (response.status === 401) { setSignedOut(true); throw new Error("Your session has expired. Please sign in again."); }
       if (!response.ok) throw new Error(data.error || "Could not save profile.");
       setProfile(data.profile);
       setName(data.profile.full_name || "");
@@ -78,15 +90,19 @@ export default function DriverProfilePage() {
               </div>
               <div>
                 <label htmlFor="profile-name" className="mb-2 block text-sm font-bold text-slate-700">Full name</label>
-                <input id="profile-name" value={name} onChange={(e) => setName(e.target.value)} minLength={2} maxLength={80} required autoComplete="name" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100" placeholder="Enter your full name" />
+                <input id="profile-name" value={name} onChange={(e) => { setName(e.target.value); setSuccess(""); }} minLength={2} maxLength={80} required autoComplete="name" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100" placeholder="Enter your full name" />
               </div>
               <div>
                 <label htmlFor="profile-city" className="mb-2 block text-sm font-bold text-slate-700">Home city <span className="font-normal text-slate-400">(optional)</span></label>
-                <input id="profile-city" value={city} onChange={(e) => setCity(e.target.value)} maxLength={80} autoComplete="address-level2" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100" placeholder="e.g. Hyderabad" />
+                <input id="profile-city" value={city} onChange={(e) => { setCity(e.target.value); setSuccess(""); }} maxLength={80} autoComplete="address-level2" className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100" placeholder="e.g. Hyderabad" />
               </div>
+              {hasChanges && <p className="rounded-xl border border-sky-100 bg-sky-50 p-3 text-sm text-sky-800">You have unsaved profile changes.</p>}
               {error && <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
               {success && <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{success}</p>}
-              <button type="submit" disabled={saving} className="w-full rounded-xl bg-sky-600 px-5 py-3.5 font-extrabold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60">{saving ? "Saving…" : "Save profile"}</button>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button type="submit" disabled={saving || !hasChanges} className="flex-1 rounded-xl bg-sky-600 px-5 py-3.5 font-extrabold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50">{saving ? "Saving…" : "Save profile"}</button>
+                <button type="button" onClick={resetChanges} disabled={saving || !hasChanges} className="rounded-xl border border-sky-200 px-5 py-3.5 font-bold text-sky-700 transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50">Discard changes</button>
+              </div>
             </form>
           )}
           {!signedOut && error && !loading && <button onClick={() => void loadProfile()} className="mt-4 text-sm font-bold text-sky-700 underline">Retry loading</button>}
