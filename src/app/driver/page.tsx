@@ -70,6 +70,13 @@ export default function DriverHomePage() {
     return () => window.clearInterval(timer);
   }, [loadStatus]);
 
+  // Approved drivers should land on the map-first driver workspace instead of the onboarding dashboard.
+  useEffect(() => {
+    if (!loading && !signedOut && data?.can_go_online) {
+      window.location.replace("/driver/instant-rides");
+    }
+  }, [loading, signedOut, data?.can_go_online]);
+
   const status = data?.verification.status ?? "not_submitted";
   const submitted = new Map((data?.documents ?? []).map((doc) => [doc.document_type, doc]));
   const statusStyle =
