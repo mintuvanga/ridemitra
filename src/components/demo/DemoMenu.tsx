@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 const links = [
+  ["Driver onboarding", "/demo/onboarding", "Registration, vehicle selection and verification preview"],
   ["Dashboard", "/demo/dashboard", "Driver workspace overview"],
   ["Instant rides", "/demo/instant-rides", "Requests and ride lifecycle"],
   ["All rides", "/demo/rides", "Upcoming and past ride examples"],
