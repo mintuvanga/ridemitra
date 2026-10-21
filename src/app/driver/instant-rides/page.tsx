@@ -68,6 +68,7 @@ export default function DriverInstantRidesPage() {
     completed_rides: number;
   } | null>(null);
   const watchId = useRef<number | null>(null);
+  const previousRequestIds = useRef<Set<string> | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -88,9 +89,17 @@ export default function DriverInstantRidesPage() {
         }
       }
       if (ridesResponse.ok) {
-        setRequests(r.requests || []);
+        const nextRequests: Ride[] = Array.isArray(r.requests) ? r.requests : [];
+        const nextIds = new Set(nextRequests.map((ride) => ride.id));
+        const previousIds = previousRequestIds.current;
+        previousRequestIds.current = nextIds;
+        setRequests(nextRequests);
         setActive(r.active || []);
         setMessage("");
+        if (previousIds && nextRequests.some((ride) => !previousIds.has(ride.id))) {
+          window.location.assign("/driver/new-ride-requests");
+          return;
+        }
       } else {
         setMessage(r.error || "Sign in to use driver mode.");
       }
@@ -578,13 +587,14 @@ export default function DriverInstantRidesPage() {
               </div>
             </article>
 
-            <article className="min-w-0 rounded-3xl border border-white/10 bg-[#0b2234] p-4 shadow-xl shadow-black/10 sm:p-5">
+            <article id="new-ride-requests" className="min-w-0 rounded-3xl border border-white/10 bg-[#0b2234] p-4 shadow-xl shadow-black/10 sm:p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-base font-black sm:text-lg">New ride requests</h2>
                   <p className="mt-1 text-xs text-slate-400">
                     Requests matched to your selected vehicle
                   </p>
+                  <Link href="/driver/new-ride-requests" className="mt-2 inline-flex text-xs font-extrabold text-emerald-200 hover:text-emerald-100">Open new ride requests →</Link>
                 </div>
                 <span className="flex h-8 min-w-8 items-center justify-center rounded-xl bg-emerald-300/10 px-2 text-sm font-black text-emerald-200">
                   {requests.length}
