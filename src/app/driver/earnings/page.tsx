@@ -28,6 +28,7 @@ const money = (value: number) =>
 
 export default function DriverEarningsPage() {
   const [data, setData] = useState<EarningsData | null>(null);
+  const [period, setPeriod] = useState<"all" | "today" | "week" | "month">("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -85,8 +86,8 @@ export default function DriverEarningsPage() {
         new Date(ride.completed_at).toISOString()
       ])
     ];
-    const csv = rows.map(row => row.map(value => '"' + String(value).replace(/"/g, '""') + '"').join(",")).join("\\r\\n");
-    const blob = new Blob(["\\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+    const csv = rows.map(row => row.map(value => '"' + String(value).replace(/"/g, '""') + '"').join(",")).join("\r\n");
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
