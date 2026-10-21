@@ -45,6 +45,12 @@ export async function PATCH(request: NextRequest, context: Context) {
     await ensureSchema();
     const { id } = await context.params;
     const sql = getSql();
+    if (action === "accept") {
+      const verification = await sql`select status from public.driver_verifications where user_id = ${user.id} limit 1`;
+      if (verification[0]?.status !== "approved") {
+        return NextResponse.json({ error: "Driver verification must be approved before accepting passenger bookings." }, { status: 403 });
+      }
+    }
     const result = await sql.begin(async (tx) => {
       const rows = await tx`
         select b.id, b.status, b.trip_id, b.seats_requested, t.driver_id, t.seats_available
@@ -63,7 +69,7 @@ export async function PATCH(request: NextRequest, context: Context) {
         await tx`update public.bookings set status = 'cancelled' where id = ${id}`;
       } else {
         if (booking.status !== "confirmed") throw new Error("RIDE_NOT_CONFIRMED");
-        await tx`update public.bookings set status = 'completed' where id = ${id}`;
+        await tx`update public.bookings set status = 'completed', completed_at = now() where id = ${id}`;
       }
       return { id, status: action === "accept" ? "confirmed" : action === "reject" ? "cancelled" : "completed" };
     });
