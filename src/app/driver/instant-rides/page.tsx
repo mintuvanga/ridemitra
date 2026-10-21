@@ -533,7 +533,7 @@ export default function DriverInstantRidesPage() {
           </section>
 
           <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(330px,0.85fr)]">
-            <article className="min-w-0 overflow-hidden rounded-3xl border border-white/10 bg-[#0b2234] shadow-xl shadow-black/10">
+            <article id="driver-map" className="min-w-0 scroll-mt-20 overflow-hidden rounded-3xl border border-white/10 bg-[#0b2234] shadow-xl shadow-black/10">
               <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-3 pt-5 sm:px-5">
                 <div>
                   <h2 className="text-base font-black sm:text-lg">Live driver map</h2>
@@ -684,9 +684,9 @@ export default function DriverInstantRidesPage() {
           <Link href="/driver/rides" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-slate-100">
             <span className="text-xl leading-5">↗</span><span className="text-[10px] font-extrabold">My rides</span>
           </Link>
-          <Link href="/driver/instant-rides" aria-label="New ride" className="flex min-h-[58px] -translate-y-2 flex-col items-center justify-center gap-1 rounded-2xl border border-emerald-200/30 bg-gradient-to-br from-emerald-300 to-emerald-400 px-1 text-[#062033] shadow-lg shadow-emerald-500/20">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-black/5 text-2xl font-black leading-none">＋</span><span className="text-[10px] font-black">New ride</span>
-          </Link>
+          <a href="#driver-map" aria-label="Map" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-emerald-200">
+            <span className="text-xl leading-5">⌖</span><span className="text-[10px] font-extrabold">Map</span>
+          </a>
           <Link href="/driver/earnings" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-slate-100">
             <span className="text-xl leading-5">₹</span><span className="text-[10px] font-extrabold">Earnings</span>
           </Link>
