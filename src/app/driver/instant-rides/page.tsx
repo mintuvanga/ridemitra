@@ -713,107 +713,17 @@ export default function DriverInstantRidesPage() {
             </article>
           </section>
 
-          <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-            <article className="rounded-3xl border border-white/10 bg-[#0b2234] p-4 shadow-xl shadow-black/10 sm:p-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-base font-black sm:text-lg">Active trips</h2>
-                  <p className="mt-1 text-xs text-slate-400">Manage each trip from pickup to completion.</p>
-                </div>
-                <Link
-                  href="/driver/rides"
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-extrabold text-slate-200 hover:bg-white/10"
-                >
-                  All rides ↗
-                </Link>
-              </div>
-
-              {active.length === 0 ? (
-                <div className="mt-4 flex items-center gap-3 rounded-2xl border border-dashed border-white/10 p-4">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/5 text-xl text-slate-400">⌁</span>
-                  <div>
-                    <p className="text-sm font-extrabold">No active trips</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-400">Accepted rides will appear here with the next action ready.</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-4 space-y-3">
-                  {active.map((ride) => (
-                    <article key={ride.id} className="rounded-2xl border border-white/10 bg-[#102b3e] p-4">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-black">{ride.passenger_name || "Ride customer"}</p>
-                          <p className="mt-1 text-xs text-slate-400">{currentVehicle} · {money(Number(ride.estimated_fare || 0))} estimated fare</p>
-                        </div>
-                        <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-[10px] font-extrabold text-emerald-200">
-                          {statusNames[ride.status] || ride.status}
-                        </span>
-                      </div>
-                      <div className="mt-3 grid gap-2 text-xs leading-5 text-slate-300 sm:grid-cols-2">
-                        <p><span className="text-emerald-300">● </span><b className="text-slate-100">Pickup:</b> {ride.pickup}</p>
-                        <p><span className="text-rose-300">● </span><b className="text-slate-100">Drop:</b> {ride.destination}</p>
-                      </div>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {ride.status === "accepted" && (
-                          <button type="button" onClick={() => void act(ride, "arriving")} disabled={busy === ride.id} className="rounded-xl bg-emerald-300 px-4 py-2.5 text-xs font-black text-[#062033] disabled:opacity-50">
-                            I’m arriving
-                          </button>
-                        )}
-                        {ride.status === "arriving" && (
-                          <button type="button" onClick={() => void act(ride, "start")} disabled={busy === ride.id} className="rounded-xl bg-emerald-300 px-4 py-2.5 text-xs font-black text-[#062033] disabled:opacity-50">
-                            Start ride
-                          </button>
-                        )}
-                        {ride.status === "in_progress" && (
-                          <button type="button" onClick={() => void act(ride, "complete")} disabled={busy === ride.id} className="rounded-xl bg-emerald-300 px-4 py-2.5 text-xs font-black text-[#062033] disabled:opacity-50">
-                            Complete ride
-                          </button>
-                        )}
-                        <Link href={"/ride/track?ride=" + encodeURIComponent(ride.id)} className="rounded-xl border border-white/10 px-4 py-2.5 text-xs font-extrabold text-slate-200 hover:bg-white/5">
-                          Passenger tracking
-                        </Link>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </article>
-
-            <div className="grid grid-cols-2 gap-3 xl:grid-cols-1">
-              <Link href="/driver/earnings" className="group rounded-2xl border border-white/10 bg-[#0b2234] p-4 transition hover:border-emerald-300/30 hover:bg-[#0d293c] sm:rounded-3xl sm:p-5">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-300/10 text-lg font-black text-emerald-200">₹</span>
-                <p className="mt-4 text-sm font-black">Earnings & wallet</p>
-                <p className="mt-1 text-xs leading-5 text-slate-400">Review fare estimates and ride history.</p>
-                <span className="mt-4 inline-flex text-xs font-extrabold text-emerald-200">Open earnings ↗</span>
-              </Link>
-              <Link href="/driver/profile" className="group rounded-2xl border border-white/10 bg-[#0b2234] p-4 transition hover:border-emerald-300/30 hover:bg-[#0d293c] sm:rounded-3xl sm:p-5">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-300/10 text-lg font-black text-cyan-200">◉</span>
-                <p className="mt-4 text-sm font-black">Profile & documents</p>
-                <p className="mt-1 text-xs leading-5 text-slate-400">Manage driver and vehicle details.</p>
-                <span className="mt-4 inline-flex text-xs font-extrabold text-cyan-200">View profile ↗</span>
-              </Link>
-              <Link href="/support" className="col-span-2 group rounded-2xl border border-white/10 bg-[#0b2234] p-4 transition hover:border-emerald-300/30 hover:bg-[#0d293c] sm:rounded-3xl sm:p-5 xl:col-span-1">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-300/10 text-lg font-black text-amber-200">?</span>
-                <p className="mt-4 text-sm font-black">Captain support</p>
-                <p className="mt-1 text-xs leading-5 text-slate-400">Get help with trips, documents or your account.</p>
-                <span className="mt-4 inline-flex text-xs font-extrabold text-amber-200">Get help ↗</span>
-              </Link>
-            </div>
-          </section>
-
-          <p className="px-1 pb-2 text-[10px] leading-5 text-slate-500">
-            Earnings are estimated from recorded fares. Payment settlement and withdrawals are not enabled until a payment provider is connected.
-          </p>
         </div>
       </div>
 
       <nav aria-label="Driver app navigation" className="fixed inset-x-0 bottom-0 z-[850] border-t border-white/10 bg-[#071827]/95 px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur-xl lg:hidden">
-        <div className="mx-auto grid max-w-xl grid-cols-4 gap-1">
+        <div className="mx-auto grid max-w-xl grid-cols-5 gap-1">
           {[
             { label: "Home", href: "/driver/instant-rides", symbol: "⌂" },
             { label: "Rides", href: "/driver/rides", symbol: "↗" },
             { label: "Earnings", href: "/driver/earnings", symbol: "₹" },
             { label: "Profile", href: "/driver/profile", symbol: "◉" },
+            { label: "Support", href: "/support", symbol: "?" },
           ].map((item, index) => (
             <Link
               key={item.href}
