@@ -175,10 +175,21 @@ export default function DriverEarningsPage() {
           </div>
         </section>
 
-        <nav className="mt-6 grid grid-cols-3 gap-2" aria-label="Driver page navigation">
-          <Link href="/driver" className="rounded-2xl border border-white/10 bg-[#0b2234] p-3 text-center text-xs font-bold text-slate-300 hover:bg-white/5"><span className="block text-xl">⌂</span><span className="mt-1 block">Dashboard</span></Link>
-          <Link href="/driver/rides" className="rounded-2xl border border-white/10 bg-[#0b2234] p-3 text-center text-xs font-bold text-slate-300 hover:bg-white/5"><span className="block text-xl">🛺</span><span className="mt-1 block">My rides</span></Link>
-          <Link href="/driver/earnings" aria-current="page" className="rounded-2xl border border-emerald-300/25 bg-emerald-300/10 p-3 text-center text-xs font-bold text-emerald-200"><span className="block text-xl">₹</span><span className="mt-1 block">Ride summary</span></Link>
+        <nav aria-label="Driver app navigation" className="fixed inset-x-0 bottom-0 z-[850] border-t border-white/10 bg-[#071827]/95 px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur-xl">
+          <div className="mx-auto grid w-full max-w-[520px] grid-cols-4 gap-1">
+            <Link href="/driver/instant-rides" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-emerald-200">
+              <span className="text-xl leading-5">⌂</span><span className="text-[10px] font-extrabold">Home</span>
+            </Link>
+            <Link href="/driver/new-ride-requests" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-emerald-200">
+              <span className="text-xl leading-5">＋</span><span className="text-[10px] font-extrabold">New rides</span>
+            </Link>
+            <Link href="/driver/earnings" aria-current="page" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl bg-emerald-300/10 px-1 text-emerald-200">
+              <span className="text-xl leading-5">₹</span><span className="text-[10px] font-extrabold">Earnings</span>
+            </Link>
+            <Link href="/driver/instant-rides" aria-label="More options" className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-xl px-1 text-slate-400 transition hover:text-slate-100">
+              <span className="text-2xl leading-5">⋯</span><span className="text-[10px] font-extrabold">More</span>
+            </Link>
+          </div>
         </nav>
         <footer className="py-7 text-center text-xs text-slate-400">RideMitra Driver · Fare summaries are estimates; payouts are not enabled.</footer>
       </div>
