@@ -10,6 +10,7 @@ export default function DemoDriverPage() {
   const [online, setOnline] = useState(false);
   const [vehicle, setVehicle] = useState("Not selected");
   const [showStats, setShowStats] = useState(false);
+  const [summaryMinimized, setSummaryMinimized] = useState(false);
 
   useEffect(() => {
     try {
@@ -43,16 +44,16 @@ export default function DemoDriverPage() {
         <section aria-label="Today earnings and ride summary" className="mb-4">
           <article className="rounded-2xl border border-sky-100 bg-white p-3 shadow-sm sm:rounded-3xl sm:p-5">
             <div className="flex items-center justify-between gap-3">
-              <div><p className="text-xs font-extrabold uppercase tracking-wider text-slate-500">Today's summary</p><p className="mt-1 text-sm font-bold text-slate-700">Tap to expand details</p></div>
-              <button type="button" aria-expanded={showStats} onClick={() => setShowStats(v => !v)} className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-xl font-black text-sky-700 hover:bg-sky-50">{showStats ? "−" : "+"}</button>
+              <div><p className="text-xs font-extrabold uppercase tracking-wider text-slate-500">Today's summary</p><p className="mt-1 text-sm font-bold text-slate-700">{summaryMinimized ? "Summary minimized" : "Today's earnings and ride totals"}</p></div>
+              <button type="button" aria-expanded={!summaryMinimized} aria-label={summaryMinimized ? "Unminimize today's summary" : "Minimize today's summary"} onClick={() => setSummaryMinimized(v => !v)} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-extrabold text-sky-700 hover:bg-sky-50">{summaryMinimized ? "＋ Unminimize" : "− Minimize"}</button>
             </div>
-            <div className="mt-4 grid grid-cols-3 gap-1.5 sm:gap-2">
+            {!summaryMinimized && <><div className="mt-4 grid grid-cols-3 gap-1.5 sm:gap-2">
               <button type="button" onClick={() => setShowStats(v => !v)} className="min-w-0 rounded-xl bg-sky-50 p-2.5 text-left hover:bg-sky-100 sm:p-3"><span className="text-xl" aria-hidden="true">₹</span><p className="mt-1 text-[11px] font-bold text-slate-500">Earnings</p><p className="text-base font-black text-slate-900">{cash(0)}</p></button>
               <button type="button" onClick={() => setShowStats(v => !v)} className="min-w-0 rounded-xl bg-emerald-50 p-2.5 text-left hover:bg-emerald-100 sm:p-3"><span className="text-xl" aria-hidden="true">✓</span><p className="mt-1 text-[11px] font-bold text-slate-500">Completed</p><p className="text-base font-black text-slate-900">0 rides</p></button>
               <button type="button" onClick={() => setShowStats(v => !v)} className="min-w-0 rounded-xl bg-rose-50 p-2.5 text-left hover:bg-rose-100 sm:p-3"><span className="text-xl" aria-hidden="true">↙</span><p className="mt-1 text-[11px] font-bold text-slate-500">Rejected</p><p className="text-base font-black text-slate-900">0 rides</p></button>
             </div>
             {showStats && <div className="mt-3 rounded-xl bg-slate-50 p-4 text-sm"><div className="flex justify-between py-1"><span className="text-slate-500">Registered vehicle</span><strong>{vehicle}</strong></div><div className="flex justify-between py-1"><span className="text-slate-500">Incoming sample requests</span><strong>2</strong></div><Link href="/demo/earnings" className="mt-3 inline-flex font-extrabold text-sky-700 underline">View earnings details →</Link></div>}
-            <p className="mt-3 text-[11px] text-slate-400">Guest demo · sample totals only</p>
+            <p className="mt-3 text-[11px] text-slate-400">Guest demo · sample totals only</p></>}
           </article>
         </section>
 
