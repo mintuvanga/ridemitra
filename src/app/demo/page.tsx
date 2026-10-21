@@ -81,7 +81,7 @@ export default function DemoDriverPage() {
           </div>
         </section>
         <footer className="py-8 text-center text-xs text-slate-500">RideMitra guest preview · Sample information only · <Link href="/driver/login" className="font-bold text-sky-700 underline">Sign in to your private account</Link></footer>
-      </div>
+      </div><nav aria-label="Demo driver navigation" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-slate-200 bg-white/95 px-1 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_-4px_18px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden"><Link href="/demo" className="flex flex-col items-center gap-1 px-1 py-2 text-[11px] font-bold text-sky-700"><span className="text-xl" aria-hidden="true">⌂</span>Home</Link><Link href="/demo/rides/request" className="flex flex-col items-center gap-1 px-1 py-2 text-[11px] font-bold text-slate-600"><span className="text-xl" aria-hidden="true">↗</span>Requests</Link><Link href="/demo/active-ride" className="flex flex-col items-center gap-1 px-1 py-2 text-[11px] font-bold text-slate-600"><span className="text-xl" aria-hidden="true">✓</span>Active</Link><Link href="/demo/earnings" className="flex flex-col items-center gap-1 px-1 py-2 text-[11px] font-bold text-slate-600"><span className="text-xl" aria-hidden="true">₹</span>Earnings</Link></nav>
     </main>
   );
 }
