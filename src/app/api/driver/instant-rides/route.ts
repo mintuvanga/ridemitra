@@ -66,7 +66,7 @@ export async function PATCH(request: NextRequest) {
       const rows = await tx`
         select r.*, dp.is_online, dp.vehicle_type as driver_vehicle, dp.latitude as driver_latitude, dp.longitude as driver_longitude, dp.updated_at as location_updated
         from public.instant_rides r join public.driver_presence dp on dp.driver_id = ${user.id}
-        where r.id = ${id} for update of r
+        where r.id = ${id} for update of r, dp
       `;
       const ride = rows[0];
       if (!ride || ride.passenger_id === user.id) throw new Error("RIDE_NOT_FOUND");
@@ -79,6 +79,8 @@ export async function PATCH(request: NextRequest) {
         if (action === "reject") {
           await tx`insert into public.instant_ride_rejections (ride_id, driver_id) values (${id}, ${user.id}) on conflict (ride_id, driver_id) do nothing`;
         } else {
+          const activeRide = await tx`select id from public.instant_rides where driver_id = ${user.id} and status in ('accepted', 'arriving', 'in_progress') limit 1`;
+          if (activeRide[0]) throw new Error("DRIVER_HAS_ACTIVE_RIDE");
           const taken = await tx`update public.instant_rides set status = 'accepted', driver_id = ${user.id}, updated_at = now() where id = ${id} and status = 'requested' returning id`;
           if (!taken[0]) throw new Error("RIDE_NOT_AVAILABLE");
         }
@@ -98,6 +100,7 @@ export async function PATCH(request: NextRequest) {
     const map: Record<string, [number, string]> = {
       RIDE_NOT_FOUND: [404, "Ride not found."],
       RIDE_NOT_AVAILABLE: [409, "This ride request has already been handled."],
+      DRIVER_HAS_ACTIVE_RIDE: [409, "Complete your current ride before accepting another request."],
       DRIVER_OFFLINE: [409, "Go online and refresh your location first."],
       VEHICLE_MISMATCH: [409, "Your online vehicle does not match this request."],
       TOO_FAR: [409, "This request is outside the 15 km matching radius."],
