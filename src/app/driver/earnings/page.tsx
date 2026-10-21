@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 type Ride = {
@@ -56,6 +56,45 @@ export default function DriverEarningsPage() {
     };
   }, []);
 
+  const visibleRides = useMemo(() => {
+    const rides = data?.rides ?? [];
+    const now = new Date();
+    const start = new Date(now);
+    if (period === "today") start.setHours(0, 0, 0, 0);
+    if (period === "week") {
+      start.setHours(0, 0, 0, 0);
+      const day = (start.getDay() + 6) % 7;
+      start.setDate(start.getDate() - day);
+    }
+    if (period === "month") {
+      start.setHours(0, 0, 0, 0);
+      start.setDate(1);
+    }
+    return period === "all" ? rides : rides.filter(ride => {
+      const date = new Date(ride.completed_at);
+      return !Number.isNaN(date.getTime()) && date >= start && date <= now;
+    });
+  }, [data, period]);
+
+  function exportCsv() {
+    const rows = [
+      ["Ride ID", "Type", "Pickup", "Destination", "Vehicle", "Estimated fare INR", "Completed at"],
+      ...visibleRides.map(ride => [
+        ride.id, ride.source === "instant" ? "Instant ride" : "Shared journey",
+        ride.pickup, ride.destination, ride.vehicle_type, String(Number(ride.estimated_fare || 0)),
+        new Date(ride.completed_at).toISOString()
+      ])
+    ];
+    const csv = rows.map(row => row.map(value => '"' + String(value).replace(/"/g, '""') + '"').join(",")).join("\\r\\n");
+    const blob = new Blob(["\\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "ridemitra-ride-history-" + period + ".csv";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
   const cards = [
     { title: "Completed ride fare", value: data ? money(data.summary.total_estimated_fare) : "—", detail: `${data?.summary.completed_rides ?? 0} completed rides`, icon: "₹" },
     { title: "This week", value: data ? money(data.summary.this_week_estimated_fare) : "—", detail: `${data?.summary.completed_rides_this_week ?? 0} rides this week`, icon: "▥" },
@@ -90,8 +129,11 @@ export default function DriverEarningsPage() {
 
         <section className="mt-6 grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
           <article className="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm sm:p-7">
-            <div className="flex items-center justify-between gap-3"><div><h2 className="text-xl font-black">Completed ride activity</h2><p className="mt-1 text-sm text-slate-500">Latest 50 completed rides and shared journeys</p></div><span className="rounded-full bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700">Live data</span></div>
-            {loading ? <p className="mt-6 text-sm text-slate-500">Loading your ride history…</p> : !data?.rides.length ? (
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><h2 className="text-xl font-black">Completed ride activity</h2><p className="mt-1 text-sm text-slate-500">Latest 50 completed rides and shared journeys</p></div><button type="button" onClick={exportCsv} disabled={!visibleRides.length} className="rounded-xl border border-sky-200 px-3 py-2 text-sm font-bold text-sky-700 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50">Export CSV ↓</button></div>
+            <div className="mt-4 grid grid-cols-4 gap-1 rounded-xl bg-slate-100 p-1 text-xs font-bold sm:max-w-lg sm:text-sm">
+              {([{ value: "all", label: "All" }, { value: "today", label: "Today" }, { value: "week", label: "This week" }, { value: "month", label: "This month" }] as const).map(item => <button key={item.value} type="button" aria-pressed={period === item.value} onClick={() => setPeriod(item.value)} className={`rounded-lg px-2 py-2.5 transition ${period === item.value ? "bg-white text-sky-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>{item.label}</button>)}
+            </div>
+            {loading ? <p className="mt-6 text-sm text-slate-500">Loading your ride history…</p> : !visibleRides.length ? (
               <div className="mt-5 rounded-2xl border border-dashed border-sky-200 bg-sky-50/70 px-5 py-9 text-center">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm" aria-hidden="true">🛺</div>
                 <h3 className="mt-4 font-extrabold">No completed rides yet</h3>
@@ -99,7 +141,7 @@ export default function DriverEarningsPage() {
               </div>
             ) : (
               <div className="mt-4 divide-y divide-sky-100">
-                {data.rides.map(ride => (
+                {visibleRides.map(ride => (
                   <div key={ride.id} className="py-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="min-w-0"><p className="font-bold">{ride.pickup || "Pickup location"} <span className="text-sky-600">→</span> {ride.destination || "Destination"}</p><p className="mt-1 text-xs text-slate-500">{new Date(ride.completed_at).toLocaleString("en-IN")} · {ride.vehicle_type} · {ride.source === "instant" ? "Instant ride" : "Shared journey"}</p></div>
