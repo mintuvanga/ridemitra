@@ -40,7 +40,23 @@ export default function DemoDriverPage() {
       <div className="mx-auto max-w-6xl px-3 py-4 sm:px-6 sm:py-6">
         <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><strong>Demo only:</strong> All rides and fares are fictional. This preview does not dispatch real requests, collect GPS, upload documents or process payments.</div>
 
-        <section className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+        <section aria-label="Today earnings and ride summary" className="mb-4">
+          <article className="rounded-2xl border border-sky-100 bg-white p-3 shadow-sm sm:rounded-3xl sm:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div><p className="text-xs font-extrabold uppercase tracking-wider text-slate-500">Today's summary</p><p className="mt-1 text-sm font-bold text-slate-700">Tap to expand details</p></div>
+              <button type="button" aria-expanded={showStats} onClick={() => setShowStats(v => !v)} className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-xl font-black text-sky-700 hover:bg-sky-50">{showStats ? "−" : "+"}</button>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-1.5 sm:gap-2">
+              <button type="button" onClick={() => setShowStats(v => !v)} className="min-w-0 rounded-xl bg-sky-50 p-2.5 text-left hover:bg-sky-100 sm:p-3"><span className="text-xl" aria-hidden="true">₹</span><p className="mt-1 text-[11px] font-bold text-slate-500">Earnings</p><p className="text-base font-black text-slate-900">{cash(0)}</p></button>
+              <button type="button" onClick={() => setShowStats(v => !v)} className="min-w-0 rounded-xl bg-emerald-50 p-2.5 text-left hover:bg-emerald-100 sm:p-3"><span className="text-xl" aria-hidden="true">✓</span><p className="mt-1 text-[11px] font-bold text-slate-500">Completed</p><p className="text-base font-black text-slate-900">0 rides</p></button>
+              <button type="button" onClick={() => setShowStats(v => !v)} className="min-w-0 rounded-xl bg-rose-50 p-2.5 text-left hover:bg-rose-100 sm:p-3"><span className="text-xl" aria-hidden="true">↙</span><p className="mt-1 text-[11px] font-bold text-slate-500">Rejected</p><p className="text-base font-black text-slate-900">0 rides</p></button>
+            </div>
+            {showStats && <div className="mt-3 rounded-xl bg-slate-50 p-4 text-sm"><div className="flex justify-between py-1"><span className="text-slate-500">Registered vehicle</span><strong>{vehicle}</strong></div><div className="flex justify-between py-1"><span className="text-slate-500">Incoming sample requests</span><strong>2</strong></div><Link href="/demo/earnings" className="mt-3 inline-flex font-extrabold text-sky-700 underline">View earnings details →</Link></div>}
+            <p className="mt-3 text-[11px] text-slate-400">Guest demo · sample totals only</p>
+          </article>
+        </section>
+
+        <section className="grid gap-3">
           <article className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:rounded-3xl sm:p-8">
             <p className="text-sm font-bold uppercase tracking-wider text-slate-500">Captain workspace · Hyderabad</p>
             <h1 className="mt-2 text-2xl font-black sm:text-4xl">Good day, Demo Driver</h1>
@@ -59,19 +75,7 @@ export default function DemoDriverPage() {
             <p className="mt-3 text-xs text-slate-500">This toggle is a visual simulation only. It does not change real dispatch availability or use your location.</p>
           </article>
 
-          <article className="rounded-2xl border border-sky-100 bg-white p-3 shadow-sm sm:rounded-3xl sm:p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div><p className="text-xs font-extrabold uppercase tracking-wider text-slate-500">Today's summary</p><p className="mt-1 text-sm font-bold text-slate-700">Tap to expand details</p></div>
-              <button type="button" aria-expanded={showStats} onClick={() => setShowStats(v => !v)} className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-xl font-black text-sky-700 hover:bg-sky-50">{showStats ? "−" : "+"}</button>
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-1.5 sm:gap-2">
-              <button type="button" onClick={() => setShowStats(v => !v)} className="min-w-0 rounded-xl bg-sky-50 p-2.5 text-left hover:bg-sky-100 sm:p-3"><span className="text-xl" aria-hidden="true">₹</span><p className="mt-1 text-[11px] font-bold text-slate-500">Earnings</p><p className="text-base font-black text-slate-900">{cash(0)}</p></button>
-              <button type="button" onClick={() => setShowStats(v => !v)} className="min-w-0 rounded-xl bg-emerald-50 p-2.5 text-left hover:bg-emerald-100 sm:p-3"><span className="text-xl" aria-hidden="true">✓</span><p className="mt-1 text-[11px] font-bold text-slate-500">Completed</p><p className="text-base font-black text-slate-900">0 rides</p></button>
-              <button type="button" onClick={() => setShowStats(v => !v)} className="min-w-0 rounded-xl bg-rose-50 p-2.5 text-left hover:bg-rose-100 sm:p-3"><span className="text-xl" aria-hidden="true">↙</span><p className="mt-1 text-[11px] font-bold text-slate-500">Rejected</p><p className="text-base font-black text-slate-900">0 rides</p></button>
-            </div>
-            {showStats && <div className="mt-3 rounded-xl bg-slate-50 p-4 text-sm"><div className="flex justify-between py-1"><span className="text-slate-500">Registered vehicle</span><strong>{vehicle}</strong></div><div className="flex justify-between py-1"><span className="text-slate-500">Incoming sample requests</span><strong>2</strong></div><Link href="/demo/earnings" className="mt-3 inline-flex font-extrabold text-sky-700 underline">View earnings details →</Link></div>}
-            <p className="mt-3 text-[11px] text-slate-400">Guest demo · sample totals only</p>
-          </article>
+
         </section>
 
         <section className="mt-7">
