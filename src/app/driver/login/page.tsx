@@ -41,7 +41,7 @@ export default function DriverLoginPage() {
         if (statusResponse.ok) {
           const status = await statusResponse.json();
           if (status.status === "approved") {
-            window.location.assign("/driver");
+            window.location.assign("/driver/instant-rides");
             return;
           }
         }
