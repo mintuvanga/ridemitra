@@ -292,8 +292,12 @@ export default function DriverInstantRidesPage() {
         "Ride updated: " +
           (statusNames[data.ride?.status] || data.ride?.status || "success"),
       );
+      if (action === "accept") {
+        window.location.href = "/driver/active-ride?ride=" + encodeURIComponent(ride.id);
+        return;
+      }
       await load();
-      if (["accept", "arriving", "start"].includes(action)) {
+      if (["arriving", "start"].includes(action)) {
         const destination = action === "start" ? ride.destination : ride.pickup;
         window.open(
           "https://www.google.com/maps/dir/?api=1&destination=" +
