@@ -110,81 +110,81 @@ export default function DriverRidesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-blue-50 px-4 py-5 text-slate-900 sm:px-6">
-      <div className="mx-auto max-w-5xl">
-        <header className="flex items-center justify-between gap-3 rounded-2xl border border-sky-100 bg-white px-4 py-3 shadow-sm sm:px-6">
-          <Link href="/driver" className="text-xl font-black tracking-tight">Ride<span className="text-sky-600">Mitra</span><span className="ml-2 text-sm font-semibold text-slate-500">Driver</span></Link>
-          <Link href="/support" className="rounded-xl border border-sky-200 px-3 py-2 text-sm font-bold text-sky-700 hover:bg-sky-50">Contact Support ↗</Link>
+    <main className="min-h-screen bg-[#071827] px-3 pb-28 pt-3 text-[#edf7f7] sm:px-4">
+      <div className="mx-auto w-full max-w-[520px]">
+        <header className="sticky top-0 z-[800] flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#071827]/95 px-3 py-3 shadow-lg backdrop-blur-xl">
+          <Link href="/driver" className="text-lg font-black tracking-tight">Ride<span className="text-emerald-300">Mitra</span><span className="ml-2 text-xs font-semibold text-slate-400">Driver</span></Link>
+          <Link href="/support" className="min-h-10 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-200 transition hover:bg-white/10">Contact Support ↗</Link>
         </header>
 
-        <section className="mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-sky-600 via-sky-600 to-blue-700 p-6 text-white shadow-xl shadow-sky-200 sm:p-9">
+        <section className="mt-4 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0d2b40] to-[#0b3b3a] p-5 text-white shadow-xl shadow-black/10">
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-100">Driver workspace</p>
-              <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Your rides</h1>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-sky-50 sm:text-base">Review real booking requests for journeys you created, accept or reject requests, and navigate with Google Maps.</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-emerald-200">Driver workspace</p>
+              <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Your rides</h1>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">Review real booking requests for journeys you created, accept or reject requests, and navigate with Google Maps.</p>
             </div>
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center self-start rounded-3xl border border-white/20 bg-white/10 text-4xl sm:self-auto" aria-hidden="true">🛺</div>
+            <div className="hidden h-14 w-14 shrink-0 items-center justify-center self-start rounded-2xl border border-white/10 bg-white/5 text-3xl sm:flex sm:self-auto" aria-hidden="true">🛺</div>
           </div>
         </section>
 
-        <section className="mt-6 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm"><p className="text-sm font-semibold text-slate-500">New requests</p><p className="mt-2 text-3xl font-black">{pending.length}</p><p className="mt-1 text-xs text-slate-500">Waiting for your decision</p></div>
-          <div className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm"><p className="text-sm font-semibold text-slate-500">Accepted rides</p><p className="mt-2 text-3xl font-black">{upcoming.length}</p><p className="mt-1 text-xs text-slate-500">Confirmed bookings</p></div>
-          <div className="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm"><p className="text-sm font-semibold text-slate-500">Finished / rejected</p><p className="mt-2 text-3xl font-black">{completed.length}</p><p className="mt-1 text-xs text-slate-500">Past booking activity</p></div>
+        <section className="mt-3 grid grid-cols-3 gap-2">
+          <div className="min-w-0 rounded-2xl border border-white/10 bg-[#0b2234] p-3 shadow-lg shadow-black/5 sm:p-4"><p className="text-[10px] font-semibold leading-4 text-slate-400 sm:text-xs">New requests</p><p className="mt-2 text-2xl font-black text-slate-100 sm:text-3xl">{pending.length}</p><p className="mt-1 text-[10px] leading-4 text-slate-500">Waiting for your decision</p></div>
+          <div className="min-w-0 rounded-2xl border border-white/10 bg-[#0b2234] p-3 shadow-lg shadow-black/5 sm:p-4"><p className="text-[10px] font-semibold leading-4 text-slate-400 sm:text-xs">Accepted rides</p><p className="mt-2 text-2xl font-black text-slate-100 sm:text-3xl">{upcoming.length}</p><p className="mt-1 text-[10px] leading-4 text-slate-500">Confirmed bookings</p></div>
+          <div className="min-w-0 rounded-2xl border border-white/10 bg-[#0b2234] p-3 shadow-lg shadow-black/5 sm:p-4"><p className="text-[10px] font-semibold leading-4 text-slate-400 sm:text-xs">Finished / rejected</p><p className="mt-2 text-2xl font-black text-slate-100 sm:text-3xl">{completed.length}</p><p className="mt-1 text-[10px] leading-4 text-slate-500">Past booking activity</p></div>
         </section>
 
-        <section className="mt-6 rounded-3xl border border-sky-100 bg-white p-5 shadow-sm sm:p-7">
+        <section className="mt-4 rounded-3xl border border-white/10 bg-[#0b2234] p-4 shadow-xl shadow-black/5 sm:p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div><h2 className="text-2xl font-black">Ride activity</h2><p className="mt-1 text-sm text-slate-500">Booking data refreshes automatically every 15 seconds.</p></div>
+            <div><h2 className="text-xl font-black">Ride activity</h2><p className="mt-1 text-xs leading-5 text-slate-400">Booking data refreshes automatically every 15 seconds.</p></div>
             <div className="flex items-center gap-3">
-              <span className="hidden text-xs text-slate-400 sm:inline">{lastUpdated ? `Updated ${lastUpdated}` : ""}</span>
-              <button type="button" onClick={() => void loadBookings(true)} disabled={refreshing || loading} className="rounded-xl border border-sky-200 px-3 py-2 text-sm font-bold text-sky-700 hover:bg-sky-50 disabled:opacity-50">{refreshing ? "Refreshing…" : "↻ Refresh"}</button>
+              <span className="hidden text-xs text-slate-500 sm:inline">{lastUpdated ? `Updated ${lastUpdated}` : ""}</span>
+              <button type="button" onClick={() => void loadBookings(true)} disabled={refreshing || loading} className="min-h-10 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-200 transition hover:bg-white/10 disabled:opacity-50">{refreshing ? "Refreshing…" : "↻ Refresh"}</button>
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-3 rounded-xl bg-slate-100 p-1 text-xs font-bold sm:text-sm">
-            {([[ "available", "New requests" ], [ "upcoming", "Accepted" ], [ "completed", "History" ]] as const).map(([key, label]) => <button key={key} type="button" onClick={() => setTab(key)} className={`rounded-lg px-2 py-2.5 transition sm:px-3 ${tab === key ? "bg-white text-sky-700 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>{label}</button>)}
+          <div className="mt-4 grid grid-cols-3 rounded-xl border border-white/10 bg-[#071827] p-1 text-[11px] font-bold sm:text-sm">
+            {([[ "available", "New requests" ], [ "upcoming", "Accepted" ], [ "completed", "History" ]] as const).map(([key, label]) => <button key={key} type="button" onClick={() => setTab(key)} className={`rounded-lg px-1.5 py-2.5 transition sm:px-3 ${tab === key ? "bg-emerald-300/10 text-emerald-200 shadow-sm" : "text-slate-400 hover:text-slate-100"}`}>{label}</button>)}
           </div>
 
-          {error && <div role="alert" className="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800"><strong>Unable to load/update rides.</strong> {error} <button type="button" onClick={() => void loadBookings()} className="ml-2 font-bold underline">Try again</button></div>}
-          {notice && <p role="status" className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{notice}</p>}
+          {error && <div role="alert" className="mt-4 rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-sm text-rose-100"><strong>Unable to load/update rides.</strong> {error} <button type="button" onClick={() => void loadBookings()} className="ml-2 font-bold underline">Try again</button></div>}
+          {notice && <p role="status" className="mt-4 rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-3 text-sm font-semibold text-emerald-100">{notice}</p>}
 
           {loading ? (
-            <div className="mt-6 rounded-2xl bg-sky-50 px-5 py-12 text-center text-sm font-semibold text-slate-600">Loading your booking requests…</div>
+            <div className="mt-4 rounded-2xl border border-white/10 bg-[#071827] px-4 py-10 text-center text-sm font-semibold text-slate-300">Loading your booking requests…</div>
           ) : visibleBookings.length === 0 ? (
-            <div className="mt-6 rounded-2xl border border-dashed border-sky-200 bg-sky-50/70 px-5 py-12 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm" aria-hidden="true">{tab === "available" ? "🧭" : tab === "upcoming" ? "🗓️" : "🧾"}</div>
-              <h3 className="mt-4 text-lg font-extrabold">{tab === "available" ? "No new booking requests" : tab === "upcoming" ? "No accepted rides" : "No ride history yet"}</h3>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">{tab === "available" ? "New requests from passengers for your listed journeys will appear here." : tab === "upcoming" ? "When you accept a passenger request, it will appear here." : "Accepted rides that are completed or rejected requests will appear here."}</p>
-              <Link href="/trips" className="mt-5 inline-flex items-center justify-center rounded-xl border border-sky-200 bg-white px-5 py-3 text-sm font-extrabold text-sky-700 hover:bg-sky-50">View journeys <span className="ml-2" aria-hidden="true">→</span></Link>
+            <div className="mt-4 rounded-2xl border border-dashed border-white/15 bg-[#071827] px-4 py-10 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-3xl" aria-hidden="true">{tab === "available" ? "🧭" : tab === "upcoming" ? "🗓️" : "🧾"}</div>
+              <h3 className="mt-4 text-base font-extrabold">{tab === "available" ? "No new booking requests" : tab === "upcoming" ? "No accepted rides" : "No ride history yet"}</h3>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-400">{tab === "available" ? "New requests from passengers for your listed journeys will appear here." : tab === "upcoming" ? "When you accept a passenger request, it will appear here." : "Accepted rides that are completed or rejected requests will appear here."}</p>
+              <Link href="/trips" className="mt-5 inline-flex items-center justify-center min-h-11 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-extrabold text-emerald-200 hover:bg-white/10">View journeys <span className="ml-2" aria-hidden="true">→</span></Link>
             </div>
           ) : (
-            <div className="mt-5 space-y-4">
+            <div className="mt-4 space-y-3">
               {visibleBookings.map((booking) => (
-                <article key={booking.booking_id} className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm sm:p-5">
+                <article key={booking.booking_id} className="rounded-2xl border border-white/10 bg-[#071827] p-3.5 shadow-lg shadow-black/5 sm:p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-wide text-sky-700">{booking.vehicle_type === "motorcycle" ? "Bike ride" : "Car ride"} · {booking.seats_requested} seat{booking.seats_requested === 1 ? "" : "s"}</p>
-                      <h3 className="mt-1 text-lg font-black">{booking.passenger_name || "Passenger"}</h3>
-                      <p className="mt-1 text-sm text-slate-500">Requested {formatDate(booking.created_at)}</p>
+                      <p className="text-[10px] font-extrabold uppercase tracking-wide text-emerald-200">{booking.vehicle_type === "motorcycle" ? "Bike ride" : "Car ride"} · {booking.seats_requested} seat{booking.seats_requested === 1 ? "" : "s"}</p>
+                      <h3 className="mt-1 text-base font-black sm:text-lg">{booking.passenger_name || "Passenger"}</h3>
+                      <p className="mt-1 text-xs text-slate-400">Requested {formatDate(booking.created_at)}</p>
                     </div>
                     <span className={`rounded-full px-3 py-1 text-xs font-extrabold ${booking.booking_status === "pending" ? "bg-amber-100 text-amber-800" : booking.booking_status === "confirmed" ? "bg-emerald-100 text-emerald-800" : booking.booking_status === "completed" ? "bg-sky-100 text-sky-800" : "bg-slate-100 text-slate-600"}`}>{booking.booking_status === "pending" ? "Needs response" : booking.booking_status === "confirmed" ? "Accepted" : booking.booking_status === "completed" ? "Completed" : "Rejected / cancelled"}</span>
                   </div>
-                  <div className="mt-4 grid gap-3 rounded-xl bg-sky-50 p-4 sm:grid-cols-2">
-                    <div><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Pickup / origin</p><p className="mt-1 font-bold">{booking.origin_city}</p></div>
-                    <div><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Destination</p><p className="mt-1 font-bold">{booking.destination_city}</p></div>
-                    <div><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Departure</p><p className="mt-1 text-sm font-semibold">{formatDate(booking.departure_at)}</p></div>
-                    <div><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Fare per seat</p><p className="mt-1 text-sm font-extrabold text-sky-800">₹{Number(booking.price_per_seat || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</p></div>
+                  <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 rounded-xl border border-white/5 bg-[#0b2234] p-3 sm:grid-cols-2 sm:p-4">
+                    <div><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Pickup / origin</p><p className="mt-1 break-words text-sm font-bold text-slate-100">{booking.origin_city}</p></div>
+                    <div><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Destination</p><p className="mt-1 break-words text-sm font-bold text-slate-100">{booking.destination_city}</p></div>
+                    <div><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Departure</p><p className="mt-1 break-words text-sm font-semibold text-slate-200">{formatDate(booking.departure_at)}</p></div>
+                    <div><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Fare per seat</p><p className="mt-1 text-sm font-extrabold text-emerald-200">₹{Number(booking.price_per_seat || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</p></div>
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-3 grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
                     {booking.booking_status === "pending" && <>
-                      <button type="button" disabled={busyId === booking.booking_id} onClick={() => void updateBooking(booking, "accept")} className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-sky-700 disabled:opacity-50">{busyId === booking.booking_id ? "Updating…" : "Accept & open Maps ↗"}</button>
-                      <button type="button" disabled={busyId === booking.booking_id} onClick={() => void updateBooking(booking, "reject")} className="rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-extrabold text-rose-700 hover:bg-rose-50 disabled:opacity-50">Reject</button>
+                      <button type="button" disabled={busyId === booking.booking_id} onClick={() => void updateBooking(booking, "accept")} className="min-h-11 rounded-xl bg-emerald-300 px-4 py-2.5 text-sm font-extrabold text-[#062033] hover:brightness-105 disabled:opacity-50">{busyId === booking.booking_id ? "Updating…" : "Accept & open Maps ↗"}</button>
+                      <button type="button" disabled={busyId === booking.booking_id} onClick={() => void updateBooking(booking, "reject")} className="min-h-11 rounded-xl border border-rose-300/20 bg-rose-300/10 px-4 py-2.5 text-sm font-extrabold text-rose-100 hover:bg-rose-300/15 disabled:opacity-50">Reject</button>
                     </>}
                     {booking.booking_status === "confirmed" && <>
                       <button type="button" onClick={() => window.open(mapsUrl(booking.origin_city, booking.destination_city), "_blank", "noopener,noreferrer")} className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-sky-700">Open Google Maps ↗</button>
-                      <button type="button" disabled={busyId === booking.booking_id} onClick={() => void updateBooking(booking, "complete")} className="rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-extrabold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">{busyId === booking.booking_id ? "Updating…" : "Mark completed"}</button>
+                      <button type="button" disabled={busyId === booking.booking_id} onClick={() => void updateBooking(booking, "complete")} className="min-h-11 rounded-xl border border-emerald-300/20 bg-emerald-300/10 px-4 py-2.5 text-sm font-extrabold text-emerald-100 hover:bg-emerald-300/15 disabled:opacity-50">{busyId === booking.booking_id ? "Updating…" : "Mark completed"}</button>
                     </>}
                   </div>
                 </article>
@@ -192,15 +192,15 @@ export default function DriverRidesPage() {
             </div>
           )}
 
-          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-900"><strong>Driver verification:</strong> Driver identity and vehicle verification are not yet connected to an authoritative review service. This page shows actual database bookings for journeys owned by your account; it does not mean the driver is verified or provide live GPS tracking.</div>
+          <div className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-xs leading-5 text-amber-100"><strong>Driver verification:</strong> Driver identity and vehicle verification are not yet connected to an authoritative review service. This page shows actual database bookings for journeys owned by your account; it does not mean the driver is verified or provide live GPS tracking.</div>
         </section>
 
-        <nav className="mt-6 grid grid-cols-3 gap-3" aria-label="Driver navigation">
-          <Link href="/driver" className="rounded-2xl border border-sky-100 bg-white p-4 text-center text-sm font-bold text-slate-700 hover:border-sky-300 hover:bg-sky-50"><span className="block text-xl">⌂</span><span className="mt-1 block">Dashboard</span></Link>
-          <Link href="/driver/rides" aria-current="page" className="rounded-2xl border border-sky-300 bg-sky-50 p-4 text-center text-sm font-bold text-sky-700"><span className="block text-xl">🛺</span><span className="mt-1 block">My rides</span></Link>
-          <Link href="/support" className="rounded-2xl border border-sky-100 bg-white p-4 text-center text-sm font-bold text-slate-700 hover:border-sky-300 hover:bg-sky-50"><span className="block text-xl">♡</span><span className="mt-1 block">Support</span></Link>
+        <nav className="fixed inset-x-0 bottom-0 z-[850] grid grid-cols-3 gap-2 border-t border-white/10 bg-[#071827]/95 px-3 pb-[max(env(safe-area-inset-bottom),6px)] pt-2 backdrop-blur-xl" aria-label="Driver navigation">
+          <Link href="/driver" className="min-h-[58px] rounded-xl border border-white/10 bg-white/5 p-3 text-center text-xs font-bold text-slate-300 transition hover:bg-white/10"><span className="block text-xl">⌂</span><span className="mt-1 block">Dashboard</span></Link>
+          <Link href="/driver/rides" aria-current="page" className="min-h-[58px] rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-3 text-center text-xs font-bold text-emerald-200"><span className="block text-xl">🛺</span><span className="mt-1 block">My rides</span></Link>
+          <Link href="/support" className="min-h-[58px] rounded-xl border border-white/10 bg-white/5 p-3 text-center text-xs font-bold text-slate-300 transition hover:bg-white/10"><span className="block text-xl">♡</span><span className="mt-1 block">Support</span></Link>
         </nav>
-        <footer className="py-7 text-center text-xs text-slate-500">RideMitra Driver · Booking data comes from the RideMitra database.</footer>
+        <footer className="pb-4 pt-7 text-center text-[10px] text-slate-500">RideMitra Driver · Booking data comes from the RideMitra database.</footer>
       </div>
     </main>
   );
