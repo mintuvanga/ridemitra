@@ -463,54 +463,25 @@ export default function DriverInstantRidesPage() {
             </div>
           )}
 
-          <section className="grid grid-cols-2 gap-3 xl:grid-cols-4" aria-label="Driver summary">
-            {[
-              {
-                label: "Estimated total",
-                value: totalEstimate,
-                note: "From completed ride fares",
-                symbol: "₹",
-              },
-              {
-                label: "This week",
-                value: weeklyEstimate,
-                note: "Estimated ride fares",
-                symbol: "↗",
-              },
-              {
-                label: "Completed rides",
-                value: earnings?.completed_rides ?? "—",
-                note: "All completed rides",
-                symbol: "✓",
-              },
-              {
-                label: "Active trips",
-                value: active.length,
-                note: "Currently in progress",
-                symbol: "⌁",
-              },
-            ].map((stat) => (
-              <article
-                key={stat.label}
-                className="rounded-2xl border border-white/10 bg-[#0b2234] p-4 shadow-lg shadow-black/5 sm:rounded-3xl sm:p-5"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[11px] font-bold leading-4 text-slate-400 sm:text-xs">
-                    {stat.label}
+          <section aria-label="Driver summary" className="rounded-2xl border border-white/10 bg-[#0b2234] px-3 py-3 shadow-lg shadow-black/5 sm:px-4">
+            <div className="grid grid-cols-2 divide-x divide-y divide-white/10 sm:grid-cols-4 sm:divide-y-0">
+              {[
+                { label: "Estimated total", value: totalEstimate, note: "Completed fares" },
+                { label: "This week", value: weeklyEstimate, note: "Estimated fares" },
+                { label: "Completed rides", value: earnings?.completed_rides ?? "—", note: "All-time" },
+                { label: "Active trips", value: active.length, note: "In progress" },
+              ].map((stat) => (
+                <div key={stat.label} className="min-w-0 px-3 py-2 sm:px-4 sm:py-1">
+                  <p className="truncate text-[10px] font-bold text-slate-400 sm:text-xs">{stat.label}</p>
+                  <p className="mt-1 truncate text-lg font-black tracking-tight text-slate-100 sm:text-xl">
+                    {loading && earnings === null ? "…" : stat.value}
                   </p>
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-300/10 text-sm font-black text-emerald-200">
-                    {stat.symbol}
-                  </span>
+                  <p className="mt-0.5 truncate text-[10px] text-slate-500">{stat.note}</p>
                 </div>
-                <p className="mt-3 break-words text-xl font-black tracking-tight sm:text-2xl">
-                  {loading && earnings === null ? "…" : stat.value}
-                </p>
-                <p className="mt-1 text-[10px] leading-4 text-slate-500 sm:text-xs">
-                  {stat.note}
-                </p>
-              </article>
-            ))}
+              ))}
+            </div>
           </section>
+
 
           <section className="grid min-w-0 grid-cols-1 gap-5">
             <article id="driver-map" className="min-w-0 scroll-mt-20 overflow-hidden rounded-3xl border border-white/10 bg-[#0b2234] shadow-xl shadow-black/10">
